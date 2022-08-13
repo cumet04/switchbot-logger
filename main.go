@@ -15,6 +15,7 @@ func main() {
 	s := bufio.NewScanner(os.Stdin)
 	for s.Scan() {
 		line := s.Text()
+
 		structs, err := parseLine(line)
 		if err != nil {
 			elog.Printf("failed to parse line; %s", err)
@@ -52,6 +53,7 @@ func parseLine(line string) ([]AdStructure, error) {
 	if len(rest)%3 != 0 {
 		return nil, fmt.Errorf("invalid token count")
 	}
+
 	var ads []AdStructure
 	for ; len(rest) > 0; rest = rest[3:] {
 		rawAdType := rest[0]

@@ -2,19 +2,26 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func main() {
 	elog := log.New(os.Stderr, "", log.LstdFlags)
 
-	s := bufio.NewScanner(os.Stdin)
-	for s.Scan() {
-		line := s.Text()
+	var wg sync.WaitGroup
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	scan := bufio.NewScanner(os.Stdin)
+	for scan.Scan() {
+		line := scan.Text()
 
 		structs, err := parseLine(line)
 		if err != nil {
@@ -24,14 +31,19 @@ func main() {
 		}
 
 		for _, s := range structs {
-			// ここでaddressを見て具体処理に分岐する
-			fmt.Println(s)
+			wg.Add(1)
+			go func(s AdStructure) {
+				defer wg.Done()
+				processAdStructure(ctx, s)
+			}(s)
 		}
 	}
 
-	if s.Err() != nil {
-		log.Fatal(s.Err())
+	if scan.Err() != nil {
+		log.Fatal(scan.Err())
 	}
+
+	wg.Wait()
 }
 
 type AdStructure struct {
@@ -72,4 +84,9 @@ func parseLine(line string) ([]AdStructure, error) {
 	}
 
 	return ads, nil
+}
+
+func processAdStructure(ctx context.Context, s AdStructure) {
+	// TODO: ここでaddressを見てデバイスごとのデータ解析をしたりデータストアに投げたりする
+	fmt.Println(s)
 }

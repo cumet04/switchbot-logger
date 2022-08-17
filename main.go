@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,9 +13,9 @@ import (
 	"sync"
 )
 
-func main() {
-	elog := log.New(os.Stderr, "", log.LstdFlags)
+var elog = log.New(os.Stderr, "", log.LstdFlags)
 
+func main() {
 	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -86,7 +87,68 @@ func parseLine(line string) ([]AdStructure, error) {
 	return ads, nil
 }
 
+type Record struct {
+	// TODO: なんか属性
+}
+
 func processAdStructure(ctx context.Context, s AdStructure) {
-	// TODO: ここでaddressを見てデバイスごとのデータ解析をしたりデータストアに投げたりする
-	fmt.Println(s)
+	var record *Record
+
+	devType := getDeviceTypeFor(s.DeviceAddress)
+	switch devType {
+	case "Meter":
+		record = parseMeterData(s)
+	case "Plug Mini (US)":
+		record = parsePlugData(s)
+	case "_unknown_":
+		return
+	default:
+		elog.Printf("unexpected device type: %s, addr: %s\n", devType, s.DeviceAddress)
+		return
+	}
+
+	if record == nil {
+		return
+	}
+
+	if err := storeRecord(*record); err != nil {
+		elog.Printf("failed to store record: %v\n, err: %v", record, err)
+	}
+}
+
+func getDeviceTypeFor(addr string) string {
+	bytes, err := os.ReadFile("devices.json")
+	if err != nil {
+		// TODO:
+		panic(err)
+	}
+
+	var mapping map[string]string
+	if err != nil {
+		// TODO:
+		panic(err)
+	}
+	json.Unmarshal(bytes, &mapping)
+
+	t, ok := mapping[strings.ToUpper(addr)]
+	if ok {
+		return t
+	} else {
+		return "_unknown"
+	}
+}
+
+func parseMeterData(s AdStructure) *Record {
+	// TODO: impl
+	return nil
+}
+
+func parsePlugData(s AdStructure) *Record {
+	// TODO: impl
+	return nil
+}
+
+func storeRecord(r Record) error {
+	// TODO: impl
+	return nil
 }

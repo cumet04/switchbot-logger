@@ -6,6 +6,10 @@ SAMPLE_FILE = sample.out
 run: $(SAMPLE_FILE)
 	cat $(SAMPLE_FILE) | go run main.go
 
+# 実行デバイス上で無停止のスキャンを実行する
+scan:
+	ssh "$$TARGET_USER@$$TARGET_HOST" sudo python $(SCANNER)
+
 # 5秒分のサンプル入力ファイルを生成する
 $(SAMPLE_FILE):
 # この場合、timeoutコマンドもpythonコマンドも非ゼロのstatusを返すため、"|| true" で成功扱いにする

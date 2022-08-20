@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -149,8 +150,40 @@ func getDeviceTypeFor(addr string) string {
 }
 
 func parseMeterData(s AdStructure) ([]Record, error) {
-	// TODO: impl
-	return nil, nil
+	bytes, err := hex.DecodeString(s.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// refs https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/meter.md#new-broadcast-message
+	tempIsNegative := bytes[4]&0b10000000 == 1
+	tempInt := int(bytes[4] & 0b01111111)
+	tempReal := float32(bytes[3]&0b00001111) / 10
+	temperature := float32(tempInt) + tempReal
+	if tempIsNegative {
+		temperature = -temperature
+	}
+
+	battery := float32(bytes[2] & 0b01111111)
+	humidity := float32(bytes[5] & 0b01111111)
+
+	return []Record{
+		{
+			DeviceId: s.DeviceAddress,
+			Type:     "Battery",
+			Value:    battery,
+		},
+		{
+			DeviceId: s.DeviceAddress,
+			Type:     "Temperature",
+			Value:    temperature,
+		},
+		{
+			DeviceId: s.DeviceAddress,
+			Type:     "Humidity",
+			Value:    humidity,
+		},
+	}, nil
 }
 
 func parsePlugData(s AdStructure) ([]Record, error) {

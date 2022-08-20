@@ -13,10 +13,6 @@ func TestParseLine(t *testing.T) {
 		t.Errorf("want no err, but got: %v", err)
 	}
 
-	if len(structs) != 4 {
-		t.Errorf("want 4 elements, but got %d", len(structs))
-	}
-
 	wants := []AdStructure{
 		{
 			DeviceAddress: "xy:96:43:12:61:5b",
@@ -39,9 +35,65 @@ func TestParseLine(t *testing.T) {
 			Data:          "000d540064009b4c",
 		},
 	}
+
+	if len(wants) != len(structs) {
+		t.Errorf("want %d structs, but got %d structs", len(wants), len(structs))
+	}
 	for i := range structs {
 		if wants[i] != structs[i] {
 			t.Errorf("want %v\nbut got %v", wants[i], structs[i])
 		}
 	}
+}
+
+func TestParseMeterData(t *testing.T) {
+	records, err := parseMeterData(AdStructure{
+		DeviceAddress: "xy:96:43:12:61:5b",
+		AdType:        22,
+		Data:          "000d540064009b4c",
+	})
+
+	if err != nil {
+		t.Errorf("want no err, but got: %v", err)
+	}
+
+	wants := []Record{
+		{
+			DeviceId: "xy:96:43:12:61:5b",
+			Type:     "Battery",
+			Value:    100,
+		},
+		{
+			DeviceId: "xy:96:43:12:61:5b",
+			Type:     "Temperature",
+			Value:    27.0,
+		},
+		{
+			DeviceId: "xy:96:43:12:61:5b",
+			Type:     "Humidity",
+			Value:    76,
+		},
+	}
+
+	if !containExactly(wants, records) {
+		t.Errorf("want %v, but got %v", wants, records)
+	}
+}
+
+func containExactly[T comparable](as []T, bs []T) bool {
+	if len(as) != len(bs) {
+		return false
+	}
+	for _, a := range as {
+		ok := false
+		for _, b := range bs {
+			if a == b {
+				ok = true
+			}
+		}
+		if ok != false {
+			return false
+		}
+	}
+	return true
 }

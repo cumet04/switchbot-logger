@@ -88,18 +88,21 @@ func parseLine(line string) ([]AdStructure, error) {
 }
 
 type Record struct {
-	// TODO: なんか属性
+	DeviceId string
+	Type     string
+	Value    float32
 }
 
 func processAdStructure(ctx context.Context, s AdStructure) {
-	var record *Record
+	var records []Record
+	var err error
 
 	devType := getDeviceTypeFor(s.DeviceAddress)
 	switch devType {
 	case "Meter":
-		record = parseMeterData(s)
+		records, err = parseMeterData(s)
 	case "Plug Mini (US)":
-		record = parsePlugData(s)
+		records, err = parsePlugData(s)
 	case "_unknown_":
 		return
 	default:
@@ -107,12 +110,19 @@ func processAdStructure(ctx context.Context, s AdStructure) {
 		return
 	}
 
-	if record == nil {
+	if err != nil {
+		elog.Printf("failed to parse ad structure: %v\n, err: %v", s, err)
 		return
 	}
 
-	if err := storeRecord(*record); err != nil {
-		elog.Printf("failed to store record: %v\n, err: %v", record, err)
+	if records == nil {
+		return
+	}
+
+	for _, r := range records {
+		if err := storeRecord(r); err != nil {
+			elog.Printf("failed to store record: %v\n, err: %v", r, err)
+		}
 	}
 }
 
@@ -138,14 +148,14 @@ func getDeviceTypeFor(addr string) string {
 	}
 }
 
-func parseMeterData(s AdStructure) *Record {
+func parseMeterData(s AdStructure) ([]Record, error) {
 	// TODO: impl
-	return nil
+	return nil, nil
 }
 
-func parsePlugData(s AdStructure) *Record {
+func parsePlugData(s AdStructure) ([]Record, error) {
 	// TODO: impl
-	return nil
+	return nil, nil
 }
 
 func storeRecord(r Record) error {

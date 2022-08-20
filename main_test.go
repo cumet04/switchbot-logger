@@ -80,6 +80,26 @@ func TestParseMeterData(t *testing.T) {
 	}
 }
 
+func TestParseMeterDataはServiceData以外のStructureにはnilを返す(t *testing.T) {
+	inputs := []AdStructure{
+		// 適当にいくつかリアルっぽいデータを用意
+		{DeviceAddress: "xy:96:43:12:61:5b", AdType: 1, Data: "06"},
+		{DeviceAddress: "xy:96:43:12:61:5b", AdType: 255, Data: "1"},
+	}
+
+	for _, input := range inputs {
+		records, err := parseMeterData(input)
+
+		if err != nil {
+			t.Errorf("want no err, but got: %v, input: %v", err, input)
+		}
+
+		if records != nil {
+			t.Errorf("want nil, but got: %v, input: %v", err, records)
+		}
+	}
+}
+
 func containExactly[T comparable](as []T, bs []T) bool {
 	if len(as) != len(bs) {
 		return false

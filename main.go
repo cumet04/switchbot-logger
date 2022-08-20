@@ -150,12 +150,18 @@ func getDeviceTypeFor(addr string) string {
 }
 
 func parseMeterData(s AdStructure) ([]Record, error) {
+	// 温湿度計のパケットの仕様: https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/meter.md#new-broadcast-message
+
+	// 温湿度計のデータはService Data (AdType 22)に入っているので、それ以外は無視
+	if s.AdType != 22 {
+		return nil, nil
+	}
+
 	bytes, err := hex.DecodeString(s.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	// refs https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/meter.md#new-broadcast-message
 	tempIsNegative := bytes[4]&0b10000000 == 1
 	tempInt := int(bytes[4] & 0b01111111)
 	tempReal := float32(bytes[3]&0b00001111) / 10

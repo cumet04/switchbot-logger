@@ -12,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
+
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
 var elog = log.New(os.Stderr, "", log.LstdFlags)
@@ -150,7 +153,7 @@ func processAdStructure(ctx context.Context, s AdStructure) {
 	}
 
 	for _, r := range records {
-		if err := storeRecord(r); err != nil {
+		if err := storeRecord(ctx, r); err != nil {
 			elog.Printf("failed to store record: %v\n, err: %v", r, err)
 		}
 	}
@@ -263,7 +266,22 @@ func parsePlugData(s AdStructure) ([]Record, error) {
 	}, nil
 }
 
-func storeRecord(r Record) error {
-	// TODO: impl
-	return nil
+func storeRecord(ctx context.Context, r Record) error {
+	// TODO: ちゃんと設定ファイルなり環境変数なりに出す
+	bucket := "switchbot-ble"
+	org := "switchbot"
+	token := os.Getenv("INFLUXDB_TOKEN")
+	url := "http://localhost:8086"
+
+	client := influxdb2.NewClient(url, token)
+	defer client.Close()
+
+	writeAPI := client.WriteAPIBlocking(org, bucket)
+	p := influxdb2.NewPoint(r.Type,
+		map[string]string{"DeviceId": r.DeviceId},
+		map[string]interface{}{"value": r.Value},
+		time.Now())
+	err := writeAPI.WritePoint(ctx, p)
+
+	return err
 }

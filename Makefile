@@ -20,8 +20,8 @@ ssh_run:
 	ssh "$$TARGET_USER@$$TARGET_HOST" sudo python $(SCANNER) | go run main.go
 
 # 実行デバイス用のビルド成果物およびscannerスクリプトを実行デバイス上にデプロイする
-deploy: $(PROGRAM) $(SCANNER)
-	scp ./$(PROGRAM) ./$(SCANNER) "$$TARGET_USER@$$TARGET_HOST:"
+deploy: $(PROGRAM) $(SCANNER) devices.json
+	scp ./$(PROGRAM) ./$(SCANNER) ./devices.json "$$TARGET_USER@$$TARGET_HOST:"
 
 $(PROGRAM): *.go
 # for raspberry pi 3B+

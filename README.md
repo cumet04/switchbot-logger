@@ -8,12 +8,13 @@ SwitchBotのプラグや温湿度計の計測データを取得・蓄積する�
 ### 実行デバイス (Raspberry Pi) のセットアップ
 なんらかBluetooth (BLE) が利用でき、pythonでbluepyライブラリが使えればok。また開発マシンからsshできるようになっていること。
 
+※以降はRaspberry OS Lite 64bit (bullseye)で確認しています
+
 Raspberry Pi OSであれば、以下を実行しておけば良いはず
 ```shell
-sudo apt-get install bluez python3-pip
+sudo apt-get install python3-pip libglib2.0-dev
 sudo pip install bluepy
 ```
-※再現確認しておらず、上記で過不足ないかは未確認
 
 ### 本体の開発
 goのビルドができればok。pythonは可能な限り触らない想定なので、最悪raspy上でnanoでも使って調整する。

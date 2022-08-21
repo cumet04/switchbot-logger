@@ -162,16 +162,20 @@ func parseMeterData(s AdStructure) ([]Record, error) {
 		return nil, err
 	}
 
-	tempIsNegative := bytes[4]&0b10000000 == 1
-	tempInt := int(bytes[4] & 0b01111111)
-	tempReal := float32(bytes[3]&0b00001111) / 10
+	// 下記bytesへのインデックスの数字は上記仕様にある Byte: 0 や Byte: 1 の数字とは2つズレている。
+	// "The Service data can be 8 bytes max." と記載があるのにテーブルは6byte分しかなく、
+	// 適当にズラしてみたら意図通りの数値が得られたためその状態で決め打ちにしておく。
+	// その詳細は仕様に記載がないため間違った対応の可能性があるが、ドキュメントされてないもんは仕方ない。
+	tempIsNegative := bytes[6]&0b10000000 == 1
+	tempInt := int(bytes[6] & 0b01111111)
+	tempReal := float32(bytes[5]&0b00001111) / 10
 	temperature := float32(tempInt) + tempReal
 	if tempIsNegative {
 		temperature = -temperature
 	}
 
-	battery := float32(bytes[2] & 0b01111111)
-	humidity := float32(bytes[5] & 0b01111111)
+	battery := float32(bytes[4] & 0b01111111)
+	humidity := float32(bytes[7] & 0b01111111)
 
 	return []Record{
 		{

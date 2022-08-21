@@ -22,8 +22,15 @@ func main() {
 	defer stop()
 
 	scan := bufio.NewScanner(os.Stdin)
-	for scan.Scan() {
-		line := scan.Text()
+	for {
+		line, err := scanLineWithContext(ctx, scan)
+		if err != nil {
+			elog.Print(err)
+			break
+		}
+		if line == "" {
+			break
+		}
 
 		structs, err := parseLine(line)
 		if err != nil {
@@ -41,11 +48,33 @@ func main() {
 		}
 	}
 
-	if scan.Err() != nil {
-		log.Fatal(scan.Err())
-	}
-
 	wg.Wait()
+}
+
+func scanLineWithContext(ctx context.Context, s *bufio.Scanner) (string, error) {
+	chText := make(chan string)
+	chErr := make(chan error)
+	go func() {
+		ok := s.Scan()
+		if ok {
+			chText <- s.Text()
+			return
+		}
+		if err := s.Err(); err != nil {
+			chErr <- err
+		} else {
+			chText <- ""
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case err := <-chErr:
+		return "", err
+	case text := <-chText:
+		return text, nil
+	}
 }
 
 type AdStructure struct {

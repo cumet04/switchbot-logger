@@ -111,7 +111,7 @@ func containExactly[T comparable](as []T, bs []T) bool {
 				ok = true
 			}
 		}
-		if ok != false {
+		if ok == false {
 			return false
 		}
 	}

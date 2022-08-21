@@ -2,7 +2,7 @@ package main
 
 import "testing"
 
-func TestParseLine(t *testing.T) {
+func Test_parseLine(t *testing.T) {
 	// ターミナル上の見た目としてはこんな感じ
 	// xy:96:43:12:61:5b       1       Flags   06      255     Manufacturer    5900ed964312615b        7       Complete 128b Services  cba20d00-224d-11e6-9fb8-0002a5d5c51b    22      16b Service Data        000d540064009b4c
 	input := "xy:96:43:12:61:5b\t1\tFlags\t06\t255\tManufacturer\t5900ed964312615b\t7\tComplete 128b Services\tcba20d00-224d-11e6-9fb8-0002a5d5c51b\t22\t16b Service Data\t000d540064009b4c"
@@ -46,7 +46,7 @@ func TestParseLine(t *testing.T) {
 	}
 }
 
-func TestParseMeterData(t *testing.T) {
+func Test_parseMeterData(t *testing.T) {
 	records, err := parseMeterData(AdStructure{
 		DeviceAddress: "xy:96:43:12:61:5b",
 		AdType:        22,
@@ -80,7 +80,7 @@ func TestParseMeterData(t *testing.T) {
 	}
 }
 
-func TestParseMeterDataはServiceData以外のStructureにはnilを返す(t *testing.T) {
+func Test_parseMeterDataはServiceData以外のStructureにはnilを返す(t *testing.T) {
 	inputs := []AdStructure{
 		// 適当にいくつかリアルっぽいデータを用意
 		{DeviceAddress: "xy:96:43:12:61:5b", AdType: 1, Data: "06"},

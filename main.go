@@ -245,8 +245,8 @@ func parsePlugData(s AdStructure) ([]Record, error) {
 		poweron = 0
 	}
 
-	loadMSB := bytes[12] & 0b01111111
-	loadLSB := bytes[13]
+	loadMSB := int(bytes[12] & 0b01111111)
+	loadLSB := int(bytes[13])
 	load := float32(loadMSB*0xff+loadLSB) / 10
 
 	return []Record{

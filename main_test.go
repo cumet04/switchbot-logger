@@ -112,7 +112,7 @@ func Test_parsePlugData(t *testing.T) {
 	records, err := parsePlugData(AdStructure{
 		DeviceAddress: "60:55:f9:35:99:ff", // DataにAddressが含まれるためxyでマスクするとhex.Decodeが失敗するのでffでマスク
 		AdType:        255,
-		Data:          "69096055f93599ff128010230085",
+		Data:          "69096055f9360baa048010260a8f",
 	})
 
 	if err != nil {
@@ -128,7 +128,7 @@ func Test_parsePlugData(t *testing.T) {
 		{
 			DeviceId: "60:55:f9:35:99:ff",
 			Type:     "Load",
-			Value:    13.3,
+			Value:    269.3,
 		},
 	}
 

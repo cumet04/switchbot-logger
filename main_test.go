@@ -46,6 +46,14 @@ func Test_parseLine(t *testing.T) {
 	}
 }
 
+func Test_parseLineはタブを含まない入力のときエラーを返す(t *testing.T) {
+	_, err := parseLine("hoge")
+
+	if err == nil {
+		t.Errorf("want err, but got err is nil")
+	}
+}
+
 func Test_parseMeterData(t *testing.T) {
 	records, err := parseMeterData(AdStructure{
 		DeviceAddress: "xy:96:43:12:61:5b",

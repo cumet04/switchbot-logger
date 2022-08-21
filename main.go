@@ -57,7 +57,7 @@ type AdStructure struct {
 func parseLine(line string) ([]AdStructure, error) {
 	tokens := strings.Split(line, "\t")
 
-	if len(tokens) == 0 {
+	if len(tokens) == 1 {
 		return nil, fmt.Errorf("given input has no tokens")
 	}
 	addr := tokens[0]

@@ -197,8 +197,41 @@ func parseMeterData(s AdStructure) ([]Record, error) {
 }
 
 func parsePlugData(s AdStructure) ([]Record, error) {
-	// TODO: impl
-	return nil, nil
+	// プラグミニのパケットの仕様: https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/latest/devicetypes/plugmini.md
+
+	// プラグミニのデータはManufacturer (AdType 255)に入っているので、それ以外は無視
+	if s.AdType != 255 {
+		return nil, nil
+	}
+
+	bytes, err := hex.DecodeString(s.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	var poweron int
+	if bytes[9] == 0x80 {
+		poweron = 1
+	} else {
+		poweron = 0
+	}
+
+	loadMSB := bytes[12] & 0b01111111
+	loadLSB := bytes[13]
+	load := float32(loadMSB*0xff+loadLSB) / 10
+
+	return []Record{
+		{
+			DeviceId: s.DeviceAddress,
+			Type:     "PowerOn",
+			Value:    float32(poweron),
+		},
+		{
+			DeviceId: s.DeviceAddress,
+			Type:     "Load",
+			Value:    load,
+		},
+	}, nil
 }
 
 func storeRecord(r Record) error {

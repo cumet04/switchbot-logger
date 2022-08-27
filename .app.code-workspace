@@ -1,0 +1,11 @@
+{
+  "folders": [
+    { "path": "." },
+    { "path": "./app" },
+  ],"settings": {
+    "files.exclude": {
+      // hide first-level folders from root
+      "app": true,
+    }
+  }
+}

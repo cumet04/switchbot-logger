@@ -4,7 +4,7 @@ SAMPLE_FILE = sample.out
 
 # 事前生成したサンプル入力を使い、プログラムをテスト実行する
 run: $(SAMPLE_FILE)
-	cat $(SAMPLE_FILE) | go run main.go
+	cd app; cat ../$(SAMPLE_FILE) | go run main.go
 
 # 実行デバイス上で無停止のスキャンを実行する
 scan:
@@ -17,7 +17,7 @@ $(SAMPLE_FILE):
 
 # 実行デバイス上のscanner出力を入力として接続し、プログラムをローカル実行する
 ssh_run:
-	ssh "$$TARGET_USER@$$TARGET_HOST" sudo python $(SCANNER) | go run main.go
+	cd app; ssh "$$TARGET_USER@$$TARGET_HOST" sudo python $(SCANNER) | go run main.go
 
 # 実行デバイス用のビルド成果物およびscannerスクリプトを実行デバイス上にデプロイする
 deploy: $(PROGRAM) $(SCANNER) devices.json
@@ -25,7 +25,7 @@ deploy: $(PROGRAM) $(SCANNER) devices.json
 
 $(PROGRAM): *.go
 # for raspberry pi 3B+
-	env GOOS=linux GOARCH=arm GOARM=7 go build main.go
+	cd app; env GOOS=linux GOARCH=arm GOARM=7 go build main.go -o ../$(PROGRAM)
 
 clean:; rm -f $(PROGRAM) $(SAMPLE_FILE)
 

@@ -2,10 +2,12 @@
   "folders": [
     { "path": "." },
     { "path": "./app" },
+    { "path": "./transmitter" },
   ],"settings": {
     "files.exclude": {
       // hide first-level folders from root
       "app": true,
+      "transmitter": true,
     }
   }
 }

@@ -9,11 +9,15 @@ import (
 	"os/signal"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var elog = log.New(os.Stderr, "", log.LstdFlags)
 
 func main() {
+	// TODO: 全体的にwgやcontext, channel closeなどの依存関係が大変怪しい
+
+	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -31,10 +35,15 @@ func main() {
 				elog.Printf("accept failed: %v\n", err)
 				continue
 			}
+			if conn == nil {
+				return
+			}
+			defer conn.Close()
 
+			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				c := broadcaster.Subscribe()
-				defer conn.Close()
 
 				for {
 					s, ok := <-c
@@ -54,11 +63,11 @@ func main() {
 	}()
 
 	queue := make(chan string, 500)
-	defer close(queue)
 	go func() {
 		for {
 			s, ok := <-queue
 			if !ok {
+				broadcaster.CloseAll()
 				return
 			}
 			broadcaster.Publish(s)
@@ -81,6 +90,10 @@ func main() {
 		}
 		queue <- line
 	}
+
+	close(queue)
+
+	wg.Wait()
 }
 
 // net.Listen/Accept with context
@@ -169,13 +182,22 @@ func (b *Broadcaster) Unsubscribe(c <-chan string) {
 	}
 }
 
+func (b *Broadcaster) CloseAll() {
+	b.subscribers.Range(func(key any, value any) bool {
+		switch c := value.(type) {
+		case chan string:
+			close(c)
+		}
+		return true
+	})
+}
+
 func (b *Broadcaster) Publish(s string) {
 	b.subscribers.Range(func(key any, value any) bool {
 		switch c := value.(type) {
 		case chan string:
 			c <- s
 		}
-
 		return true
 	})
 }

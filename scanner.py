@@ -1,12 +1,12 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from bluepy.btle import Scanner, DefaultDelegate
 
 
 class ScanDelegate(DefaultDelegate):
     def handleDiscovery(self, dev, isNewDev, isNewData):
         result = {
-            "time": datetime.utcnow().isoformat(),
+            "time": datetime.now(timezone.utc).isoformat(),
             "addr": dev.addr,
             "structs": [],
         }

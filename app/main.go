@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -43,11 +44,13 @@ func main() {
 		var signal RawSignal
 		err := decoder.Decode(&signal)
 		if err != nil {
-			elog.Printf("read json error: %v\n", err)
+			if err != io.EOF {
+				elog.Printf("read json error: %v\n", err)
+			}
 			break
 		}
 
-		t, err := time.Parse(time.RFC3339, signal.Time)
+		t, err := time.Parse(time.RFC3339Nano, signal.Time)
 		if err != nil {
 			panic(err) //TODO:
 		}

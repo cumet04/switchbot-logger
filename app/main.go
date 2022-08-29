@@ -47,13 +47,14 @@ func main() {
 			break
 		}
 
+		t, err := time.Parse(time.RFC3339, signal.Time)
+		if err != nil {
+			panic(err) //TODO:
+		}
+
 		var structs []AdStructure
 		for _, s := range signal.Structs {
-			structs = append(structs, AdStructure{
-				DeviceAddress: signal.Addr,
-				AdType:        s.AdType,
-				Data:          s.Value,
-			})
+			structs = append(structs, AdStructure{t, signal.Addr, s.AdType, s.Value})
 		}
 
 		for _, s := range structs {
@@ -69,15 +70,33 @@ func main() {
 }
 
 type AdStructure struct {
+	Time          time.Time
 	DeviceAddress string
 	AdType        int
 	Data          string
 }
 
 type Record struct {
+	Time     time.Time
 	DeviceId string
-	Type     string
+	Type     RecordType
 	Value    float32
+}
+
+type RecordType string
+
+var RecordTypes = struct {
+	Battery,
+	Temperature,
+	Humidity,
+	PowerOn,
+	Load RecordType
+}{
+	Battery:     "Battery",
+	Temperature: "Temperature",
+	Humidity:    "Humidity",
+	PowerOn:     "PowerOn",
+	Load:        "Load",
 }
 
 func processAdStructure(ctx context.Context, s AdStructure) {
@@ -164,21 +183,9 @@ func parseMeterData(s AdStructure) ([]Record, error) {
 	humidity := float32(bytes[7] & 0b01111111)
 
 	return []Record{
-		{
-			DeviceId: s.DeviceAddress,
-			Type:     "Battery",
-			Value:    battery,
-		},
-		{
-			DeviceId: s.DeviceAddress,
-			Type:     "Temperature",
-			Value:    temperature,
-		},
-		{
-			DeviceId: s.DeviceAddress,
-			Type:     "Humidity",
-			Value:    humidity,
-		},
+		{s.Time, s.DeviceAddress, RecordTypes.Battery, battery},
+		{s.Time, s.DeviceAddress, RecordTypes.Temperature, temperature},
+		{s.Time, s.DeviceAddress, RecordTypes.Humidity, humidity},
 	}, nil
 }
 
@@ -207,16 +214,8 @@ func parsePlugData(s AdStructure) ([]Record, error) {
 	load := float32(loadMSB*0xff+loadLSB) / 10
 
 	return []Record{
-		{
-			DeviceId: s.DeviceAddress,
-			Type:     "PowerOn",
-			Value:    float32(poweron),
-		},
-		{
-			DeviceId: s.DeviceAddress,
-			Type:     "Load",
-			Value:    load,
-		},
+		{s.Time, s.DeviceAddress, RecordTypes.PowerOn, float32(poweron)},
+		{s.Time, s.DeviceAddress, RecordTypes.Load, load},
 	}, nil
 }
 
@@ -231,10 +230,10 @@ func storeRecord(ctx context.Context, r Record) error {
 	defer client.Close()
 
 	writeAPI := client.WriteAPIBlocking(org, bucket)
-	p := influxdb2.NewPoint(r.Type,
+	p := influxdb2.NewPoint(string(r.Type),
 		map[string]string{"DeviceId": r.DeviceId},
 		map[string]interface{}{"value": r.Value},
-		time.Now())
+		r.Time)
 	err := writeAPI.WritePoint(ctx, p)
 
 	return err

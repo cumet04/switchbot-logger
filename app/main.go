@@ -1,15 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,27 +17,43 @@ import (
 
 var elog = log.New(os.Stderr, "", log.LstdFlags)
 
+type RawSignal struct {
+	Time    string `json:"time"`
+	Addr    string `json:"addr"`
+	Structs []struct {
+		AdType int    `json:"adtype"`
+		Desc   string `json:"desk"`
+		Value  string `json:"value"`
+	} `json:"structs"`
+}
+
 func main() {
 	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	scan := bufio.NewScanner(os.Stdin)
+	conn, err := net.Dial("tcp", ":5000")
+	if err != nil {
+		panic(err) // TODO:
+	}
+	defer conn.Close()
+
+	decoder := json.NewDecoder(conn)
 	for {
-		line, err := scanLineWithContext(ctx, scan)
+		var signal RawSignal
+		err := decoder.Decode(&signal)
 		if err != nil {
-			elog.Print(err)
-			break
-		}
-		if line == "" {
+			elog.Printf("read json error: %v\n", err)
 			break
 		}
 
-		structs, err := parseLine(line)
-		if err != nil {
-			elog.Printf("failed to parse line; %s", err)
-			elog.Printf("  given line: %s", line)
-			continue
+		var structs []AdStructure
+		for _, s := range signal.Structs {
+			structs = append(structs, AdStructure{
+				DeviceAddress: signal.Addr,
+				AdType:        s.AdType,
+				Data:          s.Value,
+			})
 		}
 
 		for _, s := range structs {
@@ -54,70 +68,10 @@ func main() {
 	wg.Wait()
 }
 
-func scanLineWithContext(ctx context.Context, s *bufio.Scanner) (string, error) {
-	chText := make(chan string)
-	chErr := make(chan error)
-	go func() {
-		ok := s.Scan()
-		if ok {
-			chText <- s.Text()
-			return
-		}
-		if err := s.Err(); err != nil {
-			chErr <- err
-		} else {
-			chText <- ""
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return "", ctx.Err()
-	case err := <-chErr:
-		return "", err
-	case text := <-chText:
-		return text, nil
-	}
-}
-
 type AdStructure struct {
 	DeviceAddress string
 	AdType        int
 	Data          string
-}
-
-func parseLine(line string) ([]AdStructure, error) {
-	tokens := strings.Split(line, "\t")
-
-	if len(tokens) == 1 {
-		return nil, fmt.Errorf("given input has no tokens")
-	}
-	addr := tokens[0]
-
-	// FIXME: "3stringごと"みたいなところもうちょいいい感じに書けないか
-	rest := tokens[1:]
-	if len(rest)%3 != 0 {
-		return nil, fmt.Errorf("invalid token count")
-	}
-
-	var ads []AdStructure
-	for ; len(rest) > 0; rest = rest[3:] {
-		rawAdType := rest[0]
-		// rest[1] はdescriptionだが、利用しないため読み取らずここで捨てる。refs scanner.py
-		rawData := rest[2]
-
-		t, err := strconv.Atoi(rawAdType)
-		if err != nil {
-			return nil, fmt.Errorf("given AdType isn't number: adtype=%s", rawAdType)
-		}
-		ads = append(ads, AdStructure{
-			DeviceAddress: addr,
-			AdType:        t,
-			Data:          rawData,
-		})
-	}
-
-	return ads, nil
 }
 
 type Record struct {

@@ -14,8 +14,6 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
-var elog = log.New(os.Stderr, "", log.LstdFlags)
-
 type RawSignal struct {
 	Time    string `json:"time"`
 	Addr    string `json:"addr"`
@@ -25,6 +23,38 @@ type RawSignal struct {
 		Value  string `json:"value"`
 	} `json:"structs"`
 }
+
+type AdStructure struct {
+	Time          time.Time
+	DeviceAddress string
+	AdType        int
+	Data          string
+}
+
+type Record struct {
+	Time     time.Time
+	DeviceId string
+	Type     RecordType
+	Value    float32
+}
+
+type RecordType string
+
+var RecordTypes = struct {
+	Battery,
+	Temperature,
+	Humidity,
+	PowerOn,
+	Load RecordType
+}{
+	Battery:     "Battery",
+	Temperature: "Temperature",
+	Humidity:    "Humidity",
+	PowerOn:     "PowerOn",
+	Load:        "Load",
+}
+
+var elog = log.New(os.Stderr, "", log.LstdFlags)
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -82,36 +112,6 @@ func subscribe(ctx context.Context, host string, channel string) <-chan string {
 	}()
 
 	return cPayload
-}
-
-type AdStructure struct {
-	Time          time.Time
-	DeviceAddress string
-	AdType        int
-	Data          string
-}
-
-type Record struct {
-	Time     time.Time
-	DeviceId string
-	Type     RecordType
-	Value    float32
-}
-
-type RecordType string
-
-var RecordTypes = struct {
-	Battery,
-	Temperature,
-	Humidity,
-	PowerOn,
-	Load RecordType
-}{
-	Battery:     "Battery",
-	Temperature: "Temperature",
-	Humidity:    "Humidity",
-	PowerOn:     "PowerOn",
-	Load:        "Load",
 }
 
 func processAdStructure(ctx context.Context, s AdStructure) {

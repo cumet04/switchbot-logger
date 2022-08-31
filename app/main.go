@@ -4,15 +4,13 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"io"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
@@ -29,47 +27,61 @@ type RawSignal struct {
 }
 
 func main() {
-	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	conn, err := net.Dial("tcp", ":5000")
-	if err != nil {
-		panic(err) // TODO:
-	}
-	defer conn.Close()
+	cStructs := make(chan AdStructure, 10)
 
-	decoder := json.NewDecoder(conn)
-	for {
-		var signal RawSignal
-		err := decoder.Decode(&signal)
-		if err != nil {
-			if err != io.EOF {
-				elog.Printf("read json error: %v\n", err)
+	go func() {
+		defer close(cStructs)
+
+		ch := subscribe(ctx, "localhost:6379", "switchbot")
+		for msg := range ch {
+			var signal RawSignal
+			if err := json.Unmarshal([]byte(msg), &signal); err != nil {
+				elog.Printf("unmarshal failed: %v\n", err)
+				continue
 			}
-			break
-		}
 
-		t, err := time.Parse(time.RFC3339Nano, signal.Time)
-		if err != nil {
-			panic(err) //TODO:
-		}
+			t, err := time.Parse(time.RFC3339Nano, signal.Time)
+			if err != nil {
+				elog.Printf("time parse failed: %v\n", err)
+				continue
+			}
 
-		var structs []AdStructure
-		for _, s := range signal.Structs {
-			structs = append(structs, AdStructure{t, signal.Addr, s.AdType, s.Value})
+			for _, s := range signal.Structs {
+				cStructs <- AdStructure{t, signal.Addr, s.AdType, s.Value}
+			}
 		}
+	}()
 
-		for _, s := range structs {
-			wg.Add(1)
-			go func(s AdStructure) {
-				defer wg.Done()
-				processAdStructure(ctx, s)
-			}(s)
-		}
+	for s := range cStructs {
+		processAdStructure(ctx, s)
 	}
+}
 
-	wg.Wait()
+func subscribe(ctx context.Context, host string, channel string) <-chan string {
+	rds := redis.NewClient(&redis.Options{Addr: host})
+	pubsub := rds.Subscribe(ctx, channel)
+
+	cPayload := make(chan string)
+
+	go func() {
+		defer pubsub.Close()
+		defer close(cPayload)
+
+		ch := pubsub.Channel()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg := <-ch:
+				cPayload <- msg.Payload
+			}
+		}
+	}()
+
+	return cPayload
 }
 
 type AdStructure struct {

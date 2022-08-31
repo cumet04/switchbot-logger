@@ -14,16 +14,6 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
 
-type RawSignal struct {
-	Time    string `json:"time"`
-	Addr    string `json:"addr"`
-	Structs []struct {
-		AdType int    `json:"adtype"`
-		Desc   string `json:"desk"`
-		Value  string `json:"value"`
-	} `json:"structs"`
-}
-
 type AdStructure struct {
 	Time          time.Time
 	DeviceAddress string
@@ -67,7 +57,15 @@ func main() {
 
 		ch := subscribe(ctx, "localhost:6379", "switchbot")
 		for msg := range ch {
-			var signal RawSignal
+			var signal struct {
+				Time    string `json:"time"`
+				Addr    string `json:"addr"`
+				Structs []struct {
+					AdType int    `json:"adtype"`
+					Desc   string `json:"desk"`
+					Value  string `json:"value"`
+				} `json:"structs"`
+			}
 			if err := json.Unmarshal([]byte(msg), &signal); err != nil {
 				elog.Printf("unmarshal failed: %v\n", err)
 				continue

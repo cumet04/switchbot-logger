@@ -1,23 +1,40 @@
 version: "3"
+
 services:
   app:
     build:
       context: app
-    volumes:
-      - ./app:/go/src/app
-    command: ./app
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN:
+      INFLUXDB_ORG: switchbot
+      INFLUXDB_BUCKET: switchbot-ble
 
   redis:
     image: redis:6.2.7-alpine
     ports:
       - 6379:6379
+    # pubsubにしか利用しないため、volumesなど永続化は不要
 
   influxdb:
     image: influxdb:2.4.0-alpine
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME:
+      DOCKER_INFLUXDB_INIT_PASSWORD:
+      DOCKER_INFLUXDB_INIT_ORG: switchbot
+      DOCKER_INFLUXDB_INIT_BUCKET: switchbot-ble
+    volumes:
+      - ./volumes/influxdb/data:/var/lib/influxdb2
+      - ./volumes/influxdb/config:/etc/influxdb2
     ports:
       - 8086:8086
 
-  telegraf:
-    image: telegraf:1.23.4-alpine
+  grafana:
+    image: grafana/grafana-oss:9.1.2
+    environment:
+      GF_PATHS_CONFIG: /var/lib/grafana/grafana.ini
+    volumes:
+      - ./volumes/grafana:/var/lib/grafana
     ports:
       - 3000:3000

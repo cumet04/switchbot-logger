@@ -1,3 +1,6 @@
 /scanner/sample.out
 /app/main
 /app/devices.json
+
+.env
+/volumes

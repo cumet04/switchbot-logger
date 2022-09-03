@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -44,9 +45,9 @@ var RecordTypes = struct {
 	Load:        "Load",
 }
 
-var elog = log.New(os.Stderr, "", log.LstdFlags)
-
 func main() {
+	elog := log.New(os.Stderr, "", log.LstdFlags)
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -83,8 +84,26 @@ func main() {
 		}
 	}()
 
+	var recorder Recorder
+	if len(os.Getenv("INFLUXDB_URL")) > 0 {
+		recorder = NewInfluxRecorder(
+			os.Getenv("INFLUXDB_URL"),
+			os.Getenv("INFLUXDB_TOKEN"),
+			os.Getenv("INFLUXDB_ORG"),
+			os.Getenv("INFLUXDB_BUCKET"),
+		)
+	} else {
+		recorder = NewStdoutRecorder()
+	}
+
 	for s := range cStructs {
-		processAdStructure(ctx, s)
+		records, err := extractRecords(ctx, s)
+		if err != nil {
+			elog.Printf("failed to extract records, err=%v, ad structure=%v\n", err, s)
+		}
+		for _, r := range records {
+			recorder.Record(ctx, r)
+		}
 	}
 }
 
@@ -112,36 +131,17 @@ func subscribe(ctx context.Context, host string, channel string) <-chan string {
 	return cPayload
 }
 
-func processAdStructure(ctx context.Context, s AdStructure) {
-	var records []Record
-	var err error
-
+func extractRecords(ctx context.Context, s AdStructure) ([]Record, error) {
 	devType := getDeviceTypeFor(s.DeviceAddress)
 	switch devType {
 	case "Meter":
-		records, err = parseMeterData(s)
+		return parseMeterData(s)
 	case "Plug Mini (US)":
-		records, err = parsePlugData(s)
+		return parsePlugData(s)
 	case "_unknown_":
-		return
+		return nil, nil
 	default:
-		elog.Printf("unexpected device type: %s, addr: %s\n", devType, s.DeviceAddress)
-		return
-	}
-
-	if err != nil {
-		elog.Printf("failed to parse ad structure: %v\n, err: %v", s, err)
-		return
-	}
-
-	if records == nil {
-		return
-	}
-
-	for _, r := range records {
-		if err := storeRecord(ctx, r); err != nil {
-			elog.Printf("failed to store record: %v\n, err: %v", r, err)
-		}
+		return nil, fmt.Errorf("unexpected device type: %s, addr: %s", devType, s.DeviceAddress)
 	}
 }
 
@@ -153,11 +153,11 @@ func getDeviceTypeFor(addr string) string {
 	}
 
 	var mapping map[string]string
+	err = json.Unmarshal(bytes, &mapping)
 	if err != nil {
 		// TODO:
 		panic(err)
 	}
-	json.Unmarshal(bytes, &mapping)
 
 	t, ok := mapping[strings.ToUpper(addr)]
 	if ok {
@@ -232,22 +232,52 @@ func parsePlugData(s AdStructure) ([]Record, error) {
 	}, nil
 }
 
-func storeRecord(ctx context.Context, r Record) error {
-	// TODO: ちゃんと設定ファイルなり環境変数なりに出す
-	bucket := "switchbot-ble"
-	org := "switchbot"
-	token := os.Getenv("INFLUXDB_TOKEN")
-	url := "http://localhost:8086"
+type Recorder interface {
+	Record(ctx context.Context, r Record) error
+	Close()
+}
 
-	client := influxdb2.NewClient(url, token)
-	defer client.Close()
+type InfluxRecorder struct {
+	client influxdb2.Client
+	org    string
+	bucket string
+}
 
-	writeAPI := client.WriteAPIBlocking(org, bucket)
-	p := influxdb2.NewPoint(string(r.Type),
-		map[string]string{"DeviceId": r.DeviceId},
-		map[string]interface{}{"value": r.Value},
-		r.Time)
-	err := writeAPI.WritePoint(ctx, p)
+func NewInfluxRecorder(url string, token string, org string, bucket string) *InfluxRecorder {
+	return &InfluxRecorder{
+		client: influxdb2.NewClient(url, token),
+		org:    org,
+		bucket: bucket,
+	}
+}
 
-	return err
+func (r *InfluxRecorder) Record(ctx context.Context, record Record) error {
+	writeAPI := r.client.WriteAPIBlocking(r.org, r.bucket)
+	p := influxdb2.NewPoint(
+		string(record.Type),
+		map[string]string{"DeviceId": record.DeviceId},
+		map[string]interface{}{"value": record.Value},
+		record.Time,
+	)
+
+	return writeAPI.WritePoint(ctx, p)
+}
+
+func (r *InfluxRecorder) Close() {
+	r.client.Close()
+}
+
+type StdoutRecorder struct{}
+
+func NewStdoutRecorder() *StdoutRecorder {
+	return &StdoutRecorder{}
+}
+
+func (r *StdoutRecorder) Record(ctx context.Context, record Record) error {
+	fmt.Println(record)
+	return nil
+}
+
+func (r *StdoutRecorder) Close() {
+	// nop
 }

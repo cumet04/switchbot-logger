@@ -1,57 +1,50 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func Test_parseMeterData(t *testing.T) {
-	records, err := parseMeterData(AdStructure{
-		DeviceAddress: "xy:96:43:12:61:5b",
-		AdType:        22,
-		Data:          "000d540064009b4c",
-	})
-
-	if err != nil {
-		t.Errorf("want no err, but got: %v", err)
-	}
-
-	wants := []Record{
-		{
-			DeviceId: "xy:96:43:12:61:5b",
-			Type:     "Battery",
-			Value:    100,
+	now := time.Now()
+	cases := map[string]struct {
+		Input AdStructure
+		Want  []Record
+	}{
+		"AdTypeが22(Service Data)の場合は各種情報が返る": {
+			Input: AdStructure{now, "xy:96:43:12:61:5b", 22, "000d540064009b4c"},
+			Want: []Record{
+				{now, "xy:96:43:12:61:5b", "Battery", 100},
+				{now, "xy:96:43:12:61:5b", "Temperature", 27.0},
+				{now, "xy:96:43:12:61:5b", "Humidity", 76},
+			},
 		},
-		{
-			DeviceId: "xy:96:43:12:61:5b",
-			Type:     "Temperature",
-			Value:    27.0,
+		"気温が氷点下の場合": {
+			Input: AdStructure{now, "xy:96:43:12:71:5b", 22, "000d540064001b4c"},
+			Want: []Record{
+				{now, "xy:96:43:12:71:5b", "Battery", 100},
+				{now, "xy:96:43:12:71:5b", "Temperature", -27.0},
+				{now, "xy:96:43:12:71:5b", "Humidity", 76},
+			},
 		},
-		{
-			DeviceId: "xy:96:43:12:61:5b",
-			Type:     "Humidity",
-			Value:    76,
+		// AdTypeが22(Service Data)以外であればnil
+		"AdTypeが1(Flags)の場合はnil": {
+			Input: AdStructure{now, "xy:96:43:12:81:5b", 1, "06"},
+			Want:  nil,
+		},
+		"AdTypeが255(Manufacturer)の場合はnil": {
+			Input: AdStructure{now, "xy:96:43:12:91:5b", 255, "1"},
+			Want:  nil,
 		},
 	}
 
-	if !containExactly(wants, records) {
-		t.Errorf("want %v, but got %v", wants, records)
-	}
-}
-
-func Test_parseMeterDataはServiceData以外のStructureにはnilを返す(t *testing.T) {
-	inputs := []AdStructure{
-		// 適当にいくつかリアルっぽいデータを用意
-		{DeviceAddress: "xy:96:43:12:61:5b", AdType: 1, Data: "06"},
-		{DeviceAddress: "xy:96:43:12:61:5b", AdType: 255, Data: "1"},
-	}
-
-	for _, input := range inputs {
-		records, err := parseMeterData(input)
-
+	for name, c := range cases {
+		records, err := parseMeterData(c.Input)
 		if err != nil {
-			t.Errorf("want no err, but got: %v, input: %v", err, input)
+			t.Errorf("Case %s failed: want no err, but got: %v", name, err)
 		}
-
-		if records != nil {
-			t.Errorf("want nil, but got: %v, input: %v", err, records)
+		if !containExactly(c.Want, records) {
+			t.Errorf("Case %s failed:\nwant %v,\ngot %v", name, c.Want, records)
 		}
 	}
 }

@@ -195,7 +195,7 @@ func parseMeterData(s AdStructure) ([]Record, error) {
 	// "The Service data can be 8 bytes max." と記載があるのにテーブルは6byte分しかなく、
 	// 適当にズラしてみたら意図通りの数値が得られたためその状態で決め打ちにしておく。
 	// その詳細は仕様に記載がないため間違った対応の可能性があるが、ドキュメントされてないもんは仕方ない。
-	tempIsNegative := bytes[6]&0b10000000 == 1
+	tempIsNegative := bytes[6]&0b10000000 == 0
 	tempInt := int(bytes[6] & 0b01111111)
 	tempReal := float32(bytes[5]&0b00001111) / 10
 	temperature := float32(tempInt) + tempReal

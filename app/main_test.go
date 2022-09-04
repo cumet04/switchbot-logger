@@ -50,31 +50,42 @@ func Test_parseMeterData(t *testing.T) {
 }
 
 func Test_parsePlugData(t *testing.T) {
-	records, err := parsePlugData(AdStructure{
-		DeviceAddress: "60:55:f9:35:99:ff", // DataにAddressが含まれるためxyでマスクするとhex.Decodeが失敗するのでffでマスク
-		AdType:        255,
-		Data:          "69096055f9360baa048010260a8f",
-	})
-
-	if err != nil {
-		t.Errorf("want no err, but got: %v", err)
+	now := time.Now()
+	cases := map[string]struct {
+		Input AdStructure
+		Want  []Record
+	}{
+		"AdTypeが255(Manufacturer)の場合は各種情報が返る": {
+			// DataにAddressが含まれるためxyでマスクするとhex.Decodeが失敗する。
+			// そのためMACアドレスはffでマスクする
+			Input: AdStructure{now, "60:55:f9:35:99:ff", 255, "69096055f93599ff048010260a8f"},
+			Want: []Record{
+				{now, "60:55:f9:35:99:ff", "PowerOn", 1},
+				{now, "60:55:f9:35:99:ff", "Load", 269.3},
+			},
+		},
+		"電源OFFの場合": {
+			Input: AdStructure{now, "60:55:f9:35:89:ff", 255, "69096055f93599ff040010260000"},
+			Want: []Record{
+				{now, "60:55:f9:35:89:ff", "PowerOn", 0},
+				{now, "60:55:f9:35:89:ff", "Load", 0},
+			},
+		},
+		// AdTypeが255(Manufacturer)以外であればnil
+		"AdTypeが1(Flags)の場合はnil": {
+			Input: AdStructure{now, "60:55:f9:35:79:ff", 1, "06"},
+			Want:  nil,
+		},
 	}
 
-	wants := []Record{
-		{
-			DeviceId: "60:55:f9:35:99:ff",
-			Type:     "PowerOn",
-			Value:    1,
-		},
-		{
-			DeviceId: "60:55:f9:35:99:ff",
-			Type:     "Load",
-			Value:    269.3,
-		},
-	}
-
-	if !containExactly(wants, records) {
-		t.Errorf("want %v, but got %v", wants, records)
+	for name, c := range cases {
+		records, err := parsePlugData(c.Input)
+		if err != nil {
+			t.Errorf("Case %s failed: want no err, but got: %v", name, err)
+		}
+		if !containExactly(c.Want, records) {
+			t.Errorf("Case %s failed:\nwant %v,\ngot %v", name, c.Want, records)
+		}
 	}
 }
 

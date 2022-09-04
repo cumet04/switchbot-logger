@@ -58,28 +58,13 @@ func main() {
 
 		ch := subscribe(ctx, "localhost:6379", "switchbot")
 		for msg := range ch {
-			var signal struct {
-				Time    string `json:"time"`
-				Addr    string `json:"addr"`
-				Structs []struct {
-					AdType int    `json:"adtype"`
-					Desc   string `json:"desk"`
-					Value  string `json:"value"`
-				} `json:"structs"`
-			}
-			if err := json.Unmarshal([]byte(msg), &signal); err != nil {
-				elog.Printf("unmarshal failed: %v\n", err)
-				continue
-			}
-
-			t, err := time.Parse(time.RFC3339Nano, signal.Time)
+			structs, err := parseMessage(msg)
 			if err != nil {
-				elog.Printf("time parse failed: %v\n", err)
-				continue
+				elog.Printf("parse message failed: %v\n", err)
 			}
 
-			for _, s := range signal.Structs {
-				cStructs <- AdStructure{t, signal.Addr, s.AdType, s.Value}
+			for _, s := range structs {
+				cStructs <- s
 			}
 		}
 	}()
@@ -129,6 +114,32 @@ func subscribe(ctx context.Context, host string, channel string) <-chan string {
 	}()
 
 	return cPayload
+}
+
+func parseMessage(msg string) ([]AdStructure, error) {
+	var signal struct {
+		Time    string `json:"time"`
+		Addr    string `json:"addr"`
+		Structs []struct {
+			AdType int    `json:"adtype"`
+			Desc   string `json:"desk"`
+			Value  string `json:"value"`
+		} `json:"structs"`
+	}
+	if err := json.Unmarshal([]byte(msg), &signal); err != nil {
+		return nil, err
+	}
+
+	t, err := time.Parse(time.RFC3339Nano, signal.Time)
+	if err != nil {
+		return nil, err
+	}
+
+	var structs []AdStructure
+	for _, s := range signal.Structs {
+		structs = append(structs, AdStructure{t, signal.Addr, s.AdType, s.Value})
+	}
+	return structs, nil
 }
 
 func extractRecords(ctx context.Context, s AdStructure) ([]Record, error) {

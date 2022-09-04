@@ -157,6 +157,7 @@ func extractRecords(ctx context.Context, s AdStructure) ([]Record, error) {
 }
 
 func getDeviceTypeFor(addr string) string {
+	// TODO: 変更されないファイルを都度読み込んでて無駄なのでなんとかする
 	bytes, err := os.ReadFile("devices.json")
 	if err != nil {
 		// TODO:

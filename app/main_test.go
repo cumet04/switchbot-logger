@@ -2,6 +2,40 @@ package main
 
 import "testing"
 
+func Test_parseMeterData(t *testing.T) {
+	records, err := parseMeterData(AdStructure{
+		DeviceAddress: "xy:96:43:12:61:5b",
+		AdType:        22,
+		Data:          "000d540064009b4c",
+	})
+
+	if err != nil {
+		t.Errorf("want no err, but got: %v", err)
+	}
+
+	wants := []Record{
+		{
+			DeviceId: "xy:96:43:12:61:5b",
+			Type:     "Battery",
+			Value:    100,
+		},
+		{
+			DeviceId: "xy:96:43:12:61:5b",
+			Type:     "Temperature",
+			Value:    27.0,
+		},
+		{
+			DeviceId: "xy:96:43:12:61:5b",
+			Type:     "Humidity",
+			Value:    76,
+		},
+	}
+
+	if !containExactly(wants, records) {
+		t.Errorf("want %v, but got %v", wants, records)
+	}
+}
+
 func Test_parseMeterDataはServiceData以外のStructureにはnilを返す(t *testing.T) {
 	inputs := []AdStructure{
 		// 適当にいくつかリアルっぽいデータを用意

@@ -122,7 +122,7 @@ func parseMessage(msg string) ([]AdStructure, error) {
 		Addr    string `json:"addr"`
 		Structs []struct {
 			AdType int    `json:"adtype"`
-			Desc   string `json:"desk"`
+			Desc   string `json:"desc"`
 			Value  string `json:"value"`
 		} `json:"structs"`
 	}
@@ -137,7 +137,7 @@ func parseMessage(msg string) ([]AdStructure, error) {
 
 	var structs []AdStructure
 	for _, s := range signal.Structs {
-		structs = append(structs, AdStructure{t, signal.Addr, s.AdType, s.Value})
+		structs = append(structs, AdStructure{t.UTC(), signal.Addr, s.AdType, s.Value})
 	}
 	return structs, nil
 }

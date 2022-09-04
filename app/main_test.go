@@ -5,6 +5,44 @@ import (
 	"time"
 )
 
+func Test_parseMessage(t *testing.T) {
+	cases := map[string]struct {
+		Input string
+		Want  []AdStructure
+	}{
+		"サンプル1": {
+			Input: `{"time": "2022-08-29T14:34:54.335280+00:00", "addr": "xy:42:2c:f1:18:gg", "structs": [
+				{"adtype": 255, "desc": "Manufacturer", "value": "06000109200287f865421e4d6b91bbabb73cf4d4a328d79d4233625ce8"}
+			]}`,
+			Want: []AdStructure{
+				{time.Date(2022, 8, 29, 14, 34, 54, 335280*1000, time.UTC), "xy:42:2c:f1:18:gg", 255, "06000109200287f865421e4d6b91bbabb73cf4d4a328d79d4233625ce8"},
+			},
+		},
+		"サンプル2": {
+			Input: `{"time": "2022-08-29T14:35:36.033219+00:00", "addr": "vv:27:f9:13:70:px", "structs": [
+				{"adtype": 3, "desc": "Complete 16b Services", "value": "0000fe9f-0000-1000-8000-00805f9b34fb"},
+				{"adtype": 22, "desc": "16b Service Data", "value": "9ffe0000000000000000000000000000000000000000"},
+				{"adtype": 255, "desc": "Manufacturer", "value": "e000001fca60fa8a"}
+			]}`,
+			Want: []AdStructure{
+				{time.Date(2022, 8, 29, 14, 35, 36, 33219*1000, time.UTC), "vv:27:f9:13:70:px", 3, "0000fe9f-0000-1000-8000-00805f9b34fb"},
+				{time.Date(2022, 8, 29, 14, 35, 36, 33219*1000, time.UTC), "vv:27:f9:13:70:px", 22, "9ffe0000000000000000000000000000000000000000"},
+				{time.Date(2022, 8, 29, 14, 35, 36, 33219*1000, time.UTC), "vv:27:f9:13:70:px", 255, "e000001fca60fa8a"},
+			},
+		},
+	}
+
+	for name, c := range cases {
+		structs, err := parseMessage(c.Input)
+		if err != nil {
+			t.Errorf("Case %s failed: want no err, but got: %v", name, err)
+		}
+		if !containExactly(c.Want, structs) {
+			t.Errorf("Case %s failed:\nwant %v,\ngot %v", name, c.Want, structs)
+		}
+	}
+}
+
 func Test_parseMeterData(t *testing.T) {
 	now := time.Now()
 	cases := map[string]struct {

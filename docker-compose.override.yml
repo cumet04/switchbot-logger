@@ -1,6 +1,0 @@
-services:
-  app:
-    volumes:
-      - ./app:/app
-    environment:
-      INFLUXDB_URL: ""

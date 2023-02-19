@@ -182,7 +182,7 @@ func getDeviceTypeFor(addr string) string {
 	if ok {
 		return t
 	} else {
-		return "_unknown"
+		return "_unknown_"
 	}
 }
 

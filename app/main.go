@@ -67,18 +67,8 @@ func entrypoint() int {
 		recorder = NewStdoutRecorder()
 	}
 
-	// 値未設定の場合、デフォルトのlocalhostに接続してしまうため、Pingでは意図せぬ未設定に気付けない。
-	// そのためPingとは別に値の存在チェックも行う。
-	host, ok := os.LookupEnv("REDIS_HOST")
-	if !ok {
-		fmt.Fprintln(os.Stderr, "REDIS_HOST is not set")
-		return 1
-	}
-	channel, ok := os.LookupEnv("REDIS_CHANNEL")
-	if !ok {
-		fmt.Fprintln(os.Stderr, "REDIS_CHANNEL is not set")
-		return 1
-	}
+	host := os.Getenv("REDIS_HOST") // MEMO: 無指定の場合は localhost:6379 になる
+	channel := "switchbot"
 
 	client := redis.NewClient(&redis.Options{Addr: host})
 	_, err := client.Ping(ctx).Result()
@@ -153,7 +143,7 @@ var extractRecords_mapping map[string]string
 
 func extractRecords(s AdStructure) ([]Record, error) {
 	if extractRecords_mapping == nil {
-		bytes, err := os.ReadFile(os.Getenv("DEVICE_FILE"))
+		bytes, err := os.ReadFile("./devices.json")
 		if err != nil {
 			// TODO:
 			panic(err)

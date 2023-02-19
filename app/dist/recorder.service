@@ -4,7 +4,7 @@ Requires=redis-server.service
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/recorder/current
+WorkingDirectory=/opt/recorder
 ExecStart=/opt/recorder/current/main
 EnvironmentFile=/opt/recorder/environment
 Restart=always

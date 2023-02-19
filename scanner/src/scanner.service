@@ -1,0 +1,12 @@
+[Unit]
+Description=SwitchBot Scanner
+Requires=redis-server.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/scanner/current
+ExecStart=/opt/scanner/current/publish.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

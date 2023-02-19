@@ -1,0 +1,13 @@
+[Unit]
+Description=SwitchBot Recorder
+Requires=redis-server.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/recorder/current
+ExecStart=/opt/recorder/current/main
+EnvironmentFile=/opt/recorder/environment
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

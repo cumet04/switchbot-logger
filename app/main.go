@@ -48,6 +48,10 @@ var RecordTypes = struct {
 var elog = log.New(os.Stderr, "", log.LstdFlags)
 
 func main() {
+	os.Exit(entrypoint())
+}
+
+func entrypoint() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -63,12 +67,24 @@ func main() {
 		recorder = NewStdoutRecorder()
 	}
 
-	host := os.Getenv("REDIS_HOST")
-	channel := os.Getenv("REDIS_CHANNEL")
+	// 値未設定の場合、デフォルトのlocalhostに接続してしまうため、Pingでは意図せぬ未設定に気付けない。
+	// そのためPingとは別に値の存在チェックも行う。
+	host, ok := os.LookupEnv("REDIS_HOST")
+	if !ok {
+		fmt.Fprintln(os.Stderr, "REDIS_HOST is not set")
+		return 1
+	}
+	channel, ok := os.LookupEnv("REDIS_CHANNEL")
+	if !ok {
+		fmt.Fprintln(os.Stderr, "REDIS_CHANNEL is not set")
+		return 1
+	}
+
 	client := redis.NewClient(&redis.Options{Addr: host})
 	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Fprintln(os.Stderr, err)
+		return 1
 	}
 	pubsub := client.Subscribe(ctx, channel)
 	defer pubsub.Close()
@@ -77,7 +93,7 @@ func main() {
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return 0
 		case msg := <-ch:
 			for _, r := range parseMessage(msg.Payload) {
 				recorder.Record(ctx, r)
@@ -149,7 +165,7 @@ func extractRecords(s AdStructure) ([]Record, error) {
 
 func getDeviceTypeFor(addr string) string {
 	// TODO: 変更されないファイルを都度読み込んでて無駄なのでなんとかする
-	bytes, err := os.ReadFile("devices.json")
+	bytes, err := os.ReadFile(os.Getenv("DEVICE_FILE"))
 	if err != nil {
 		// TODO:
 		panic(err)

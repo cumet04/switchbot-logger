@@ -149,8 +149,28 @@ func extractAdStructures(msg string) ([]AdStructure, error) {
 	return structs, nil
 }
 
+var extractRecords_mapping map[string]string
+
 func extractRecords(s AdStructure) ([]Record, error) {
-	devType := getDeviceTypeFor(s.DeviceAddress)
+	if extractRecords_mapping == nil {
+		bytes, err := os.ReadFile(os.Getenv("DEVICE_FILE"))
+		if err != nil {
+			// TODO:
+			panic(err)
+		}
+
+		err = json.Unmarshal(bytes, &extractRecords_mapping)
+		if err != nil {
+			// TODO:
+			panic(err)
+		}
+	}
+
+	devType, ok := extractRecords_mapping[strings.ToUpper(s.DeviceAddress)]
+	if !ok {
+		devType = "_unknown_"
+	}
+
 	switch devType {
 	case "Meter":
 		return parseMeterData(s)
@@ -160,29 +180,6 @@ func extractRecords(s AdStructure) ([]Record, error) {
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("unexpected device type: %s, addr: %s", devType, s.DeviceAddress)
-	}
-}
-
-func getDeviceTypeFor(addr string) string {
-	// TODO: 変更されないファイルを都度読み込んでて無駄なのでなんとかする
-	bytes, err := os.ReadFile(os.Getenv("DEVICE_FILE"))
-	if err != nil {
-		// TODO:
-		panic(err)
-	}
-
-	var mapping map[string]string
-	err = json.Unmarshal(bytes, &mapping)
-	if err != nil {
-		// TODO:
-		panic(err)
-	}
-
-	t, ok := mapping[strings.ToUpper(addr)]
-	if ok {
-		return t
-	} else {
-		return "_unknown_"
 	}
 }
 

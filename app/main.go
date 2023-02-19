@@ -45,29 +45,11 @@ var RecordTypes = struct {
 	Load:        "Load",
 }
 
-func main() {
-	elog := log.New(os.Stderr, "", log.LstdFlags)
+var elog = log.New(os.Stderr, "", log.LstdFlags)
 
+func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-
-	cStructs := make(chan AdStructure, 10)
-
-	go func() {
-		defer close(cStructs)
-
-		ch := subscribe(ctx, "localhost:6379", "switchbot")
-		for msg := range ch {
-			structs, err := parseMessage(msg)
-			if err != nil {
-				elog.Printf("parse message failed: %v\n", err)
-			}
-
-			for _, s := range structs {
-				cStructs <- s
-			}
-		}
-	}()
 
 	var recorder Recorder
 	if len(os.Getenv("INFLUXDB_URL")) > 0 {
@@ -81,42 +63,51 @@ func main() {
 		recorder = NewStdoutRecorder()
 	}
 
-	for s := range cStructs {
-		records, err := extractRecords(ctx, s)
-		if err != nil {
-			elog.Printf("failed to extract records, err=%v, ad structure=%v\n", err, s)
-		}
-		for _, r := range records {
-			recorder.Record(ctx, r)
+	host := os.Getenv("REDIS_HOST")
+	channel := os.Getenv("REDIS_CHANNEL")
+	client := redis.NewClient(&redis.Options{Addr: host})
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	pubsub := client.Subscribe(ctx, channel)
+	defer pubsub.Close()
+
+	ch := pubsub.Channel()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg := <-ch:
+			for _, r := range parseMessage(msg.Payload) {
+				recorder.Record(ctx, r)
+			}
 		}
 	}
 }
 
-func subscribe(ctx context.Context, host string, channel string) <-chan string {
-	rds := redis.NewClient(&redis.Options{Addr: host})
-	pubsub := rds.Subscribe(ctx, channel)
+func parseMessage(msg string) []Record {
+	// msg has-many AdStructures
+	// AdStructure has-many Records
 
-	cPayload := make(chan string)
+	structs, err := extractAdStructures(msg)
+	if err != nil {
+		elog.Printf("parse message failed: %v\n", err)
+	}
 
-	go func() {
-		defer pubsub.Close()
-		defer close(cPayload)
-
-		ch := pubsub.Channel()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case msg := <-ch:
-				cPayload <- msg.Payload
-			}
+	var records []Record
+	for _, s := range structs {
+		items, err := extractRecords(s)
+		if err != nil {
+			elog.Printf("failed to extract records, err=%v, ad structure=%v\n", err, s)
 		}
-	}()
+		records = append(records, items...)
+	}
 
-	return cPayload
+	return records
 }
 
-func parseMessage(msg string) ([]AdStructure, error) {
+func extractAdStructures(msg string) ([]AdStructure, error) {
 	var signal struct {
 		Time    string `json:"time"`
 		Addr    string `json:"addr"`
@@ -142,7 +133,7 @@ func parseMessage(msg string) ([]AdStructure, error) {
 	return structs, nil
 }
 
-func extractRecords(ctx context.Context, s AdStructure) ([]Record, error) {
+func extractRecords(s AdStructure) ([]Record, error) {
 	devType := getDeviceTypeFor(s.DeviceAddress)
 	switch devType {
 	case "Meter":

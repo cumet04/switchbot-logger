@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func Test_parseMessage(t *testing.T) {
+func Test_extractAdStructures(t *testing.T) {
 	cases := map[string]struct {
 		Input string
 		Want  []AdStructure
@@ -33,7 +33,7 @@ func Test_parseMessage(t *testing.T) {
 	}
 
 	for name, c := range cases {
-		structs, err := parseMessage(c.Input)
+		structs, err := extractAdStructures(c.Input)
 		if err != nil {
 			t.Errorf("Case %s failed: want no err, but got: %v", name, err)
 		}

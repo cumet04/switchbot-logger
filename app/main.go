@@ -55,16 +55,16 @@ func entrypoint() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	var recorder Recorder
+	var recorders []Recorder
+	recorders = append(recorders, NewStdoutRecorder())
 	if len(os.Getenv("INFLUXDB_URL")) > 0 {
-		recorder = NewInfluxRecorder(
+		r := NewInfluxRecorder(
 			os.Getenv("INFLUXDB_URL"),
 			os.Getenv("INFLUXDB_TOKEN"),
 			os.Getenv("INFLUXDB_ORG"),
 			os.Getenv("INFLUXDB_BUCKET"),
 		)
-	} else {
-		recorder = NewStdoutRecorder()
+		recorders = append(recorders, r)
 	}
 
 	host := os.Getenv("REDIS_HOST") // MEMO: 無指定の場合は localhost:6379 になる
@@ -86,7 +86,9 @@ func entrypoint() int {
 			return 0
 		case msg := <-ch:
 			for _, r := range parseMessage(msg.Payload) {
-				recorder.Record(ctx, r)
+				for _, recorder := range recorders {
+					recorder.Record(ctx, r)
+				}
 			}
 		}
 	}

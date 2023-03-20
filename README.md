@@ -59,7 +59,7 @@ sudo pip install bluepy
 デプロイ時はローカルマシンで`/scanner/deploy.sh`を実行すればデプロイ及びsystemd serviceの更新などが行われる。
 
 ### app service
-scannerと同様に`/opt/recorder`ディレクトリを作成しておき、`/app/deploy.sh`でデプロイする。
+scannerと同様に`/opt/recorder`ディレクトリを作成しておき、`app`ディレクトリ下で`make deploy`でデプロイする。
 
 また`/app/config/`のファイルを参考に、
 * 監視するSwitchBotデバイスの情報 -> `/opt/recorder/devices.json`

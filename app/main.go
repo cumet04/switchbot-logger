@@ -59,7 +59,7 @@ func entrypoint() int {
 	defer stop()
 
 	var recorders []Recorder
-	recorders = append(recorders, NewStdoutRecorder())
+	// recorders = append(recorders, NewStdoutRecorder())
 	if len(os.Getenv("INFLUXDB_URL")) > 0 {
 		r := NewInfluxRecorder(
 			os.Getenv("INFLUXDB_URL"),

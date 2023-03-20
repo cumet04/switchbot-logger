@@ -4,7 +4,7 @@
       "path": "."
     },
     {
-      "path": "./app"
+      "path": "./recorder"
     },
     {
       "path": "./scanner"
@@ -13,7 +13,7 @@
   "settings": {
     "files.exclude": {
       // hide first-level folders from root
-      "app": true,
+      "recorder": true,
       "scanner": true,
     }
   }

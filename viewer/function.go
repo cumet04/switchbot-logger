@@ -1,12 +1,15 @@
 package viewer
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -18,7 +21,7 @@ func init() {
 	functions.HTTP("HandleFunc", HandleFunc)
 }
 
-type MyRow struct {
+type Metric struct {
 	Time     time.Time `bigquery:"Time"`
 	DeviceId string    `bigquery:"DeviceId"`
 	Type     string    `bigquery:"Type"`
@@ -26,45 +29,185 @@ type MyRow struct {
 }
 
 func HandleFunc(w http.ResponseWriter, r *http.Request) {
-	projectID := os.Getenv("PROJECT_ID")
-	datasetName := "switchbot"
-	tableName := "metrics"
+	ctx := r.Context()
 
-	ctx := context.Background()
+	resp, err := main(ctx)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(resp))
+}
+
+var rows [][]bigquery.Value
+
+func main(ctx context.Context) (string, error) {
+	projectID := os.Getenv("PROJECT_ID")
+
+	client, err := NewBigQueryClient(ctx, projectID)
+	if err != nil {
+		return "", fmt.Errorf("failed to NewBigQueryClient: %v", err)
+	}
+
+	if rows == nil {
+		// TODO: キャッシュクリアする手段
+		rows, err = fetchMetrics(ctx, client, "Temperature")
+		if err != nil {
+			return "", fmt.Errorf("failed to fetchMetrics: %v", err)
+		}
+	}
+
+	tmpl, err := template.ParseFiles("template.html")
+	if err != nil {
+		return "", fmt.Errorf("failed to template.ParseFiles: %v", err)
+	}
+
+	var resp bytes.Buffer
+	err = tmpl.Execute(&resp, struct {
+		Metrics [][]bigquery.Value
+	}{rows})
+	if err != nil {
+		return "", fmt.Errorf("failed to tmpl.Execute: %v", err)
+	}
+
+	return resp.String(), nil
+}
+
+func fetchMetrics(ctx context.Context, client *BigQueryClient, deviceType string) ([][]bigquery.Value, error) {
+	devices := devicesFor(deviceType)
+	queryString := buildSampledMetricsQuery(devices, 6, 100)
+
+	var headers []bigquery.Value
+	headers = append(headers, "Time")
+	for _, d := range devices {
+		headers = append(headers, d.Name)
+	}
+
+	vaules, err := client.Query(ctx, queryString)
+	if err != nil {
+		return nil, err
+	}
+
+	var rows [][]bigquery.Value
+	rows = append(rows, headers)
+	rows = append(rows, vaules...)
+
+	return rows, nil
+}
+
+type Device struct {
+	Id   string
+	Name string
+}
+
+func devicesFor(metricType string) []Device {
+	var deviceIds []string
+	if metricType == "Humidity" || metricType == "Temperature" {
+		deviceIds = deviceIdsFor("Meter")
+	} else if metricType == "Load" {
+		deviceIds = deviceIdsFor("Plug Mini (US)")
+	}
+	if len(deviceIds) == 0 {
+		panic("invalid metric type")
+	}
+
+	var devices []Device
+	for _, id := range deviceIds {
+		devices = append(devices, Device{
+			Id:   strings.ToLower(id),             // MEMO: これの大文字小文字ってどこで正規化すべき？
+			Name: strings.ReplaceAll(id, ":", ""), // TODO: デバイス名をマッピングする
+		})
+	}
+	return devices
+}
+
+func deviceIdsFor(class string) []string {
+	// MEMO: jsonの中のidを小文字にすればよさそう
+	bytes, err := os.ReadFile("./devices.json")
+	if err != nil {
+		panic(err) // TODO:
+	}
+
+	var devices map[string]string
+	err = json.Unmarshal(bytes, &devices)
+	if err != nil {
+		panic(err) // TODO:
+	}
+
+	var deviceIds []string
+	for id, c := range devices {
+		if c == class {
+			deviceIds = append(deviceIds, id)
+		}
+	}
+	return deviceIds
+}
+
+func buildSampledMetricsQuery(devices []Device, timeRangeInHours int, sampleSize int) string {
+	var devQueries []string
+	for _, d := range devices {
+		q := fmt.Sprintf("AVG(IF (DeviceId = '%s', Value, NULL)) AS %s", d.Id, d.Name)
+		devQueries = append(devQueries, q)
+	}
+
+	samplingInterval := timeRangeInHours * 60 / sampleSize
+	if samplingInterval == 0 {
+		samplingInterval = 1
+	}
+
+	return fmt.Sprintf(`
+SELECT
+	TIMESTAMP_TRUNC(TIMESTAMP_SUB(Time, INTERVAL MOD(EXTRACT(MINUTE FROM Time), %d) MINUTE),MINUTE) AS Time,
+	%s
+FROM
+  switchbot.metrics
+WHERE
+  Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL %d HOUR)
+GROUP BY 1
+ORDER BY 1
+`, samplingInterval, strings.Join(devQueries, ","), timeRangeInHours)
+}
+
+type BigQueryClient struct {
+	client    *bigquery.Client
+	projectID string
+}
+
+func NewBigQueryClient(ctx context.Context, projectID string) (*BigQueryClient, error) {
 	client, err := bigquery.NewClient(ctx, projectID)
 	if err != nil {
-		log.Printf("Failed to create BigQuery client: %v", err)
-		http.Error(w, "Failed to create BigQuery client", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	queryString := fmt.Sprintf("SELECT Time, DeviceId, Type, Value FROM `%s.%s` ORDER BY Time DESC LIMIT 10", datasetName, tableName)
-	query := client.Query(queryString)
+	return &BigQueryClient{
+		client:    client,
+		projectID: projectID,
+	}, nil
+}
+
+// Queryは指定されたクエリを実行し、結果を二次元配列的な形式で返す。
+func (c *BigQueryClient) Query(ctx context.Context, queryString string) ([][]bigquery.Value, error) {
+	query := c.client.Query(queryString)
 	it, err := query.Read(ctx)
 	if err != nil {
-		log.Printf("Failed to execute query: %v", err)
-		http.Error(w, "Failed to execute query", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	var rows []MyRow
+	var rows [][]bigquery.Value
 	for {
-		var row MyRow
+		var row []bigquery.Value
 		err := it.Next(&row)
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			log.Printf("Failed to iterate over results: %v", err)
-			http.Error(w, "Failed to iterate over results", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 
 		rows = append(rows, row)
 	}
 
-	if err := json.NewEncoder(w).Encode(rows); err != nil {
-		log.Printf("Failed to encode response: %v", err)
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+	return rows, nil
 }

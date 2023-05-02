@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>switchbot logger viewer</title>
+  <script id="metrics" type="application/json">{{ .Metrics }}</script>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    google.charts.load('current', { packages: ['corechart', 'line'] });
+    google.charts.setOnLoadCallback(drawDashBoard);
+
+    function drawDashBoard() {
+      const [headers, ...metrics] = JSON.parse(document.getElementById('metrics').innerHTML);
+
+      const data = new google.visualization.DataTable();
+
+      const devices = headers.slice(1);
+      data.addColumn('datetime', 'Time');
+      devices.forEach(device => {
+        data.addColumn('number', device);
+      })
+
+      data.addRows(metrics.map(metric => {
+        const [time, ...values] = metric;
+        return [new Date(time), ...values];
+      }))
+
+      const chart = new google.visualization.LineChart(document.getElementById('chart'))
+      chart.draw(
+        data,
+        {
+          title: 'Temprature',
+          legend: { position: 'bottom' },
+          chartArea: {
+            left: 20, // pixel or percent; レスポンシブでいい感じにならない
+            top: 20,
+            width: '100%', // 100%にしても左の軸は表示される（？）
+            height: '75%' // title, legendの分は含まない
+          }
+        }
+      )
+    }
+  </script>
+</head>
+
+<body>
+  <div id="dashboard">
+    <div id="chart"></div>
+  </div>
+</body>
+
+</html>

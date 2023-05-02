@@ -5,6 +5,8 @@ set -eo pipefail
 host=$TARGET_USER@$TARGET_HOST
 today=$(date +%Y%m%d_%H%M%S)
 
+git rev-parse HEAD > dist/REVISION
+
 scp -r dist "$host:/tmp/recorder_$today"
 
 ssh $host <<EOS

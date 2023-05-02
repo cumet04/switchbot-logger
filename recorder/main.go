@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -55,16 +58,20 @@ func entrypoint() int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	var recorder Recorder
+	var recorders []Recorder
+	// recorders = append(recorders, NewStdoutRecorder())
 	if len(os.Getenv("INFLUXDB_URL")) > 0 {
-		recorder = NewInfluxRecorder(
+		r := NewInfluxRecorder(
 			os.Getenv("INFLUXDB_URL"),
 			os.Getenv("INFLUXDB_TOKEN"),
 			os.Getenv("INFLUXDB_ORG"),
 			os.Getenv("INFLUXDB_BUCKET"),
 		)
-	} else {
-		recorder = NewStdoutRecorder()
+		recorders = append(recorders, r)
+	}
+	if len(os.Getenv("FLUENTD_URL")) > 0 {
+		r := NewFluentRecorder(os.Getenv("FLUENTD_URL"))
+		recorders = append(recorders, r)
 	}
 
 	host := os.Getenv("REDIS_HOST") // MEMO: 無指定の場合は localhost:6379 になる
@@ -86,7 +93,9 @@ func entrypoint() int {
 			return 0
 		case msg := <-ch:
 			for _, r := range parseMessage(msg.Payload) {
-				recorder.Record(ctx, r)
+				for _, recorder := range recorders {
+					recorder.Record(ctx, r)
+				}
 			}
 		}
 	}
@@ -271,6 +280,47 @@ func (r *InfluxRecorder) Record(ctx context.Context, record Record) error {
 
 func (r *InfluxRecorder) Close() {
 	r.client.Close()
+}
+
+type FluentRecorder struct {
+	url string
+}
+
+func NewFluentRecorder(url string) *FluentRecorder {
+	return &FluentRecorder{url: url}
+}
+
+func (r *FluentRecorder) Record(ctx context.Context, record Record) error {
+	body, err := json.Marshal(record)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", r.url, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		defer resp.Body.Close()
+		bmsg, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("read response body failed in unexpected status handling: %v", err)
+		}
+		return fmt.Errorf("unexpected response status: %d, body: %s", resp.StatusCode, string(bmsg))
+	}
+
+	return nil
+}
+
+func (r *FluentRecorder) Close() {
+	// nop
 }
 
 type StdoutRecorder struct{}

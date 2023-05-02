@@ -1,4 +1,4 @@
-module github.com/cumet04/switchbot-logger
+module github.com/cumet04/switchbot-logger/recorder
 
 go 1.19
 

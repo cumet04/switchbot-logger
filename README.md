@@ -48,7 +48,7 @@ sudo pip install bluepy
 ### Redis
 `sudo apt install redis-server`などで入れる。
 
-もし他の方法で入れる場合は、scannerおよびappのserviceファイルにある`Requires=redis-server.service`をなんとかする必要がある。
+もし他の方法で入れる場合は、scannerおよびrecorderのserviceファイルにある`Requires=redis-server.service`をなんとかする必要がある。
 
 ### InfluxDB
 （なんらか入る方法で入れる、このアプリケーションの動作にはインストール方法は関係ない）
@@ -58,10 +58,10 @@ sudo pip install bluepy
 
 デプロイ時はローカルマシンで`/scanner/deploy.sh`を実行すればデプロイ及びsystemd serviceの更新などが行われる。
 
-### app service
-scannerと同様に`/opt/recorder`ディレクトリを作成しておき、`/app/deploy.sh`でデプロイする。
+### recorder service
+scannerと同様に`/opt/recorder`ディレクトリを作成しておき、`recorder`ディレクトリ下で`make deploy`でデプロイする。
 
-また`/app/config/`のファイルを参考に、
+また`recorder/config/`のファイルを参考に、
 * 監視するSwitchBotデバイスの情報 -> `/opt/recorder/devices.json`
 * InfluxDBの接続情報 -> `/opt/recorder/environment` 
 

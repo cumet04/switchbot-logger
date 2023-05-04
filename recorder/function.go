@@ -1,21 +1,17 @@
-package main
+package recorder
 
 import (
-	"bytes"
-	"context"
+	"bufio"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 )
 
 type AdStructure struct {
@@ -48,78 +44,58 @@ var RecordTypes = struct {
 	Load:        "Load",
 }
 
-var elog = log.New(os.Stderr, "", log.LstdFlags)
-
-func main() {
-	os.Exit(entrypoint())
+func init() {
+	functions.HTTP("HandleFunc", HandleFunc)
 }
 
-func entrypoint() int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	var recorders []Recorder
-	// recorders = append(recorders, NewStdoutRecorder())
-	if len(os.Getenv("INFLUXDB_URL")) > 0 {
-		r := NewInfluxRecorder(
-			os.Getenv("INFLUXDB_URL"),
-			os.Getenv("INFLUXDB_TOKEN"),
-			os.Getenv("INFLUXDB_ORG"),
-			os.Getenv("INFLUXDB_BUCKET"),
-		)
-		recorders = append(recorders, r)
-	}
-	if len(os.Getenv("FLUENTD_URL")) > 0 {
-		r := NewFluentRecorder(os.Getenv("FLUENTD_URL"))
-		recorders = append(recorders, r)
-	}
-
-	host := os.Getenv("REDIS_HOST") // MEMO: 無指定の場合は localhost:6379 になる
-	channel := "switchbot"
-
-	client := redis.NewClient(&redis.Options{Addr: host})
-	_, err := client.Ping(ctx).Result()
+func HandleFunc(w http.ResponseWriter, r *http.Request) {
+	err := entrypoint(r)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	pubsub := client.Subscribe(ctx, channel)
-	defer pubsub.Close()
-
-	ch := pubsub.Channel()
-	for {
-		select {
-		case <-ctx.Done():
-			return 0
-		case msg := <-ch:
-			for _, r := range parseMessage(msg.Payload) {
-				for _, recorder := range recorders {
-					recorder.Record(ctx, r)
-				}
-			}
-		}
+		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 }
 
-func parseMessage(msg string) []Record {
+func entrypoint(r *http.Request) error {
+	var records []Record
+
+	scanner := bufio.NewScanner(r.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		r, err := parseMessage(line)
+		if err != nil {
+			return err
+		}
+		records = append(records, r...)
+	}
+
+	for _, r := range records {
+		// TODO: bqに投げる
+		fmt.Printf("%v\n", r)
+	}
+	return nil
+}
+
+func parseMessage(msg string) ([]Record, error) {
 	// msg has-many AdStructures
 	// AdStructure has-many Records
 
 	structs, err := extractAdStructures(msg)
 	if err != nil {
-		elog.Printf("parse message failed: %v\n", err)
+		return nil, fmt.Errorf("parse message failed: %v", err)
 	}
 
 	var records []Record
 	for _, s := range structs {
 		items, err := extractRecords(s)
 		if err != nil {
-			elog.Printf("failed to extract records, err=%v, ad structure=%v\n", err, s)
+			return nil, fmt.Errorf("failed to extract records, err=%v, ad structure=%v", err, s)
 		}
 		records = append(records, items...)
 	}
 
-	return records
+	return records, nil
 }
 
 func extractAdStructures(msg string) ([]AdStructure, error) {
@@ -245,95 +221,4 @@ func parsePlugData(s AdStructure) ([]Record, error) {
 		{s.Time, s.DeviceAddress, RecordTypes.PowerOn, float32(poweron)},
 		{s.Time, s.DeviceAddress, RecordTypes.Load, load},
 	}, nil
-}
-
-type Recorder interface {
-	Record(ctx context.Context, r Record) error
-	Close()
-}
-
-type InfluxRecorder struct {
-	client influxdb2.Client
-	org    string
-	bucket string
-}
-
-func NewInfluxRecorder(url string, token string, org string, bucket string) *InfluxRecorder {
-	return &InfluxRecorder{
-		client: influxdb2.NewClient(url, token),
-		org:    org,
-		bucket: bucket,
-	}
-}
-
-func (r *InfluxRecorder) Record(ctx context.Context, record Record) error {
-	writeAPI := r.client.WriteAPIBlocking(r.org, r.bucket)
-	p := influxdb2.NewPoint(
-		string(record.Type),
-		map[string]string{"DeviceId": record.DeviceId},
-		map[string]interface{}{"value": record.Value},
-		record.Time,
-	)
-
-	return writeAPI.WritePoint(ctx, p)
-}
-
-func (r *InfluxRecorder) Close() {
-	r.client.Close()
-}
-
-type FluentRecorder struct {
-	url string
-}
-
-func NewFluentRecorder(url string) *FluentRecorder {
-	return &FluentRecorder{url: url}
-}
-
-func (r *FluentRecorder) Record(ctx context.Context, record Record) error {
-	body, err := json.Marshal(record)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", r.url, bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusCreated {
-		defer resp.Body.Close()
-		bmsg, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("read response body failed in unexpected status handling: %v", err)
-		}
-		return fmt.Errorf("unexpected response status: %d, body: %s", resp.StatusCode, string(bmsg))
-	}
-
-	return nil
-}
-
-func (r *FluentRecorder) Close() {
-	// nop
-}
-
-type StdoutRecorder struct{}
-
-func NewStdoutRecorder() *StdoutRecorder {
-	return &StdoutRecorder{}
-}
-
-func (r *StdoutRecorder) Record(ctx context.Context, record Record) error {
-	fmt.Println(record)
-	return nil
-}
-
-func (r *StdoutRecorder) Close() {
-	// nop
 }

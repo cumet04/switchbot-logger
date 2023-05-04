@@ -3,16 +3,18 @@ module github.com/cumet04/switchbot-logger/recorder
 go 1.19
 
 require (
-	github.com/go-redis/redis/v8 v8.11.5
-	github.com/influxdata/influxdb-client-go/v2 v2.10.0
+	github.com/GoogleCloudPlatform/functions-framework-go v1.7.1
+	github.com/joho/godotenv v1.5.1
 )
 
 require (
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/deepmap/oapi-codegen v1.8.2 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	cloud.google.com/go/functions v1.0.0 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.6.1 // indirect
+	github.com/google/uuid v1.1.2 // indirect
+	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
+	go.uber.org/zap v1.10.0 // indirect
 )

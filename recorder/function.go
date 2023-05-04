@@ -2,9 +2,11 @@ package recorder
 
 import (
 	"bufio"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -49,7 +51,9 @@ func init() {
 }
 
 func HandleFunc(w http.ResponseWriter, r *http.Request) {
-	err := entrypoint(r)
+	rec := NewStdoutRecorder() // TODO: impl BigQueryRecorder
+
+	err := main(r.Context(), rec, r.Body)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -57,10 +61,10 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func entrypoint(r *http.Request) error {
+func main(ctx context.Context, recorder Recorder, body io.Reader) error {
 	var records []Record
 
-	scanner := bufio.NewScanner(r.Body)
+	scanner := bufio.NewScanner(body)
 	for scanner.Scan() {
 		line := scanner.Text()
 		r, err := parseMessage(line)
@@ -71,8 +75,10 @@ func entrypoint(r *http.Request) error {
 	}
 
 	for _, r := range records {
-		// TODO: bqに投げる
-		fmt.Printf("%v\n", r)
+		err := recorder.Record(ctx, r)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -154,7 +160,8 @@ func extractRecords(s AdStructure) ([]Record, error) {
 	case "_unknown_":
 		return nil, nil
 	default:
-		return nil, fmt.Errorf("unexpected device type: %s, addr: %s", devType, s.DeviceAddress)
+		// devicesに記載があるがparseが未実装な場合
+		return nil, fmt.Errorf("unimplemented device type: %s, addr: %s", devType, s.DeviceAddress)
 	}
 }
 
@@ -221,4 +228,24 @@ func parsePlugData(s AdStructure) ([]Record, error) {
 		{s.Time, s.DeviceAddress, RecordTypes.PowerOn, float32(poweron)},
 		{s.Time, s.DeviceAddress, RecordTypes.Load, load},
 	}, nil
+}
+
+type Recorder interface {
+	Record(ctx context.Context, r Record) error
+	Close()
+}
+
+type StdoutRecorder struct{}
+
+func NewStdoutRecorder() *StdoutRecorder {
+	return &StdoutRecorder{}
+}
+
+func (r *StdoutRecorder) Record(ctx context.Context, record Record) error {
+	fmt.Println(record)
+	return nil
+}
+
+func (r *StdoutRecorder) Close() {
+	// nop
 }

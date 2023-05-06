@@ -18,6 +18,12 @@ func init() {
 }
 
 func HandleFunc(w http.ResponseWriter, r *http.Request) {
+	// pathで簡易認証を設ける
+	if r.URL.Path != os.Getenv("AUTH_PATH") {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	err := main(
 		r.Context(),
 		os.Getenv("SWITCHBOT_TOKEN"),

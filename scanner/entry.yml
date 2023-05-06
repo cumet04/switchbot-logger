@@ -23,10 +23,6 @@
         - copy:
             src: files/scanner.py
             dest: /opt/scanner/scanner.py
-        - copy:
-            src: files/publish.sh
-            dest: /opt/scanner/publish.sh
-            mode: '0755'
     - name: deploy scanner service
       become: true
       block:

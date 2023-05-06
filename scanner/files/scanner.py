@@ -25,7 +25,6 @@ class ScanDelegate(DefaultDelegate):
         # 途中でファイルを消した場合などのハンドリングは面倒なので、毎回ファイルを開いて書き込む
         with open(output_path, mode='a') as f:
             print(json.dumps(result), file=f, flush=True)
-        print(json.dumps(result), flush=True)
 
 
 scanner = Scanner().withDelegate(ScanDelegate())

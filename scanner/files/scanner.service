@@ -1,12 +1,11 @@
 [Unit]
 Description=SwitchBot Scanner
-Requires=redis-server.service
 
 [Service]
 Type=simple
 WorkingDirectory=/opt/scanner
 # MEMO: scannerはbluetoothのデバイスを触るため、rootで動く必要がある
-ExecStart=/opt/scanner/publish.sh
+ExecStart=/usr/bin/python3 /opt/scanner/scanner.py
 Restart=always
 
 [Install]

@@ -1,0 +1,12 @@
+[Unit]
+Description=SwitchBot Scanner
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/scanner
+# MEMO: scannerはbluetoothのデバイスを触るため、rootで動く必要がある
+ExecStart=/usr/bin/python3 /opt/scanner/scanner.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

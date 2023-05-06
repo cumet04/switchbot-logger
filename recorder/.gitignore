@@ -1,3 +1,2 @@
-config/devices.json
-dist/main
-REVISION
+env.yaml
+creds/*

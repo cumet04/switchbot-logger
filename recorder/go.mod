@@ -3,16 +3,33 @@ module github.com/cumet04/switchbot-logger/recorder
 go 1.19
 
 require (
-	github.com/go-redis/redis/v8 v8.11.5
-	github.com/influxdata/influxdb-client-go/v2 v2.10.0
+	cloud.google.com/go/bigquery v1.8.0
+	github.com/GoogleCloudPlatform/functions-framework-go v1.7.1
+	github.com/joho/godotenv v1.5.1
 )
 
 require (
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/deepmap/oapi-codegen v1.8.2 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	cloud.google.com/go v0.94.1 // indirect
+	cloud.google.com/go/functions v1.0.0 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.6.1 // indirect
+	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/uuid v1.1.2 // indirect
+	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
+	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
+	go.opencensus.io v0.23.0 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
+	go.uber.org/zap v1.10.0 // indirect
+	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420 // indirect
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
+	golang.org/x/sys v0.0.0-20210908233432-aa78b53d3365 // indirect
+	golang.org/x/text v0.3.6 // indirect
+	google.golang.org/api v0.57.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6 // indirect
+	google.golang.org/grpc v1.40.0 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 )

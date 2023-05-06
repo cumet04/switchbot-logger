@@ -2,17 +2,14 @@
 
 set -eo pipefail
 
-host=$TARGET_USER@$TARGET_HOST
-today=$(date +%Y%m%d_%H%M%S)
+# MEMO: サービスアカウントはコンソールなどで別途つける
 
-git rev-parse HEAD > dist/REVISION
-
-scp -r dist "$host:/tmp/recorder_$today"
-
-ssh $host <<EOS
-mv /tmp/recorder_$today /opt/recorder/$today
-ln -snf $today /opt/recorder/current
-sudo ln -sf /opt/recorder/current/recorder.service /etc/systemd/system/recorder.service
-sudo systemctl daemon-reload
-sudo systemctl restart recorder
-EOS
+gcloud functions deploy recorder \
+  --gen2 \
+  --trigger-http \
+  --allow-unauthenticated \
+  --region=asia-northeast1 \
+  --runtime=go120 \
+  --source=. \
+  --env-vars-file env.yaml \
+  --entry-point=HandleFunc

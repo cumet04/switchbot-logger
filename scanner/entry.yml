@@ -1,0 +1,47 @@
+- hosts: all
+  vars:
+    recorder_url: "{{ lookup('env', 'RECORDER_URL') }}"
+  tasks:
+    - name: setup bluepy
+      become: true
+      block:
+        - apt:
+            pkg:
+              - python3-pip
+              - libglib2.0-dev
+        - pip:
+            name: bluepy
+
+    - name: deploy scanner code
+      block:
+        - become: true
+          file:
+            path: /opt/scanner
+            state: directory
+            owner: "{{ ansible_env.USER }}"
+            group: "{{ ansible_env.USER }}"
+        - copy:
+            src: files/scanner.py
+            dest: /opt/scanner/scanner.py
+    - name: deploy scanner service
+      become: true
+      block:
+        - copy:
+            src: files/scanner.service
+            dest: /etc/systemd/system/scanner.service
+        - systemd:
+            state: restarted
+            daemon_reload: true
+            name: scanner
+
+    - name: deploy record
+      become: true
+      block:
+        - template:
+            src: templates/record.sh
+            dest: /opt/scanner/record.sh
+            mode: '0755'
+        - cron:
+            name: record
+            job: "/opt/scanner/record.sh"
+            minute: "*" # every minute

@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from bluepy.btle import Scanner, DefaultDelegate
 
+output_path = "out.json"
 
 class ScanDelegate(DefaultDelegate):
     def handleDiscovery(self, dev, isNewDev, isNewData):
@@ -21,7 +22,9 @@ class ScanDelegate(DefaultDelegate):
                     "value": value,
                 }
             )
-        print(json.dumps(result), flush=True)
+        # 途中でファイルを消した場合などのハンドリングは面倒なので、毎回ファイルを開いて書き込む
+        with open(output_path, mode='a') as f:
+            print(json.dumps(result), file=f, flush=True)
 
 
 scanner = Scanner().withDelegate(ScanDelegate())

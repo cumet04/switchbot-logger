@@ -55,6 +55,9 @@ func main(ctx context.Context, sbToken string, sbSecret string, projectID string
 		}
 		records = append(records, r...)
 	}
+	if len(records) == 0 {
+		return fmt.Errorf("scanner couldn't find any line")
+	}
 
 	// recorder := NewStdoutRecorder()
 	recorder, err := NewBigQueryRecorder(ctx, projectID)

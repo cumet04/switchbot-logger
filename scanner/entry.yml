@@ -39,12 +39,13 @@
             name: scanner
 
     - name: deploy record
+      become: true
       block:
         - template:
             src: templates/record.sh
             dest: /opt/scanner/record.sh
             mode: '0755'
-        - become: true
-          copy:
-            src: files/cron.d/record
-            dest: /etc/cron.d/record
+        - cron:
+            name: record
+            job: "/opt/scanner/record.sh"
+            minute: "*" # every minute

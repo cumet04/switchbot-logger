@@ -131,10 +131,11 @@ func (p *Parser) ParseMessage(msg string) ([]Record, error) {
 	var records []Record
 	for _, s := range structs {
 		items, err := p.extractRecords(s)
-		if err != nil {
-			return nil, fmt.Errorf("failed to extract records, err=%v, ad structure=%v", err, s)
+		if err == nil {
+			records = append(records, items...)
+		} else {
+			fmt.Fprintf(os.Stderr, "failed to extract records, err=%v, ad structure=%v\n", err, s)
 		}
-		records = append(records, items...)
 	}
 
 	return records, nil

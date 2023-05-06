@@ -32,11 +32,7 @@ func Test_extractAdStructures(t *testing.T) {
 		},
 	}
 
-	p, err := NewParser()
-	if err != nil {
-		t.Errorf("failed to create parser: %v", err)
-	}
-
+	p := NewParser()
 	for name, c := range cases {
 		structs, err := p.extractAdStructures(c.Input)
 		if err != nil {
@@ -81,11 +77,7 @@ func Test_parseMeterData(t *testing.T) {
 		},
 	}
 
-	p, err := NewParser()
-	if err != nil {
-		t.Errorf("failed to create parser: %v", err)
-	}
-
+	p := NewParser()
 	for name, c := range cases {
 		records, err := p.parseMeterData(c.Input)
 		if err != nil {
@@ -126,11 +118,7 @@ func Test_parsePlugData(t *testing.T) {
 		},
 	}
 
-	p, err := NewParser()
-	if err != nil {
-		t.Errorf("failed to create parser: %v", err)
-	}
-
+	p := NewParser()
 	for name, c := range cases {
 		records, err := p.parsePlugData(c.Input)
 		if err != nil {

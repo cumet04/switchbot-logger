@@ -18,7 +18,13 @@ func init() {
 }
 
 func HandleFunc(w http.ResponseWriter, r *http.Request) {
-	err := main(r.Context(), os.Getenv("PROJECT_ID"), r.Body)
+	err := main(
+		r.Context(),
+		os.Getenv("SWITCHBOT_TOKEN"),
+		os.Getenv("SWITCHBOT_SECRET"),
+		os.Getenv("PROJECT_ID"),
+		r.Body,
+	)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -26,10 +32,10 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main(ctx context.Context, projectID string, body io.Reader) error {
-	parser, err := NewParser()
-	if err != nil {
-		return fmt.Errorf("NewParser: %v", err)
+func main(ctx context.Context, sbToken string, sbSecret string, projectID string, body io.Reader) error {
+	parser := NewParser()
+	if err := parser.fetchDeviceTypes(sbToken, sbSecret); err != nil {
+		return fmt.Errorf("parser.fetchDeviceTypes: %v", err)
 	}
 
 	var records []Record
@@ -44,6 +50,7 @@ func main(ctx context.Context, projectID string, body io.Reader) error {
 		records = append(records, r...)
 	}
 
+	// recorder := NewStdoutRecorder()
 	recorder, err := NewBigQueryRecorder(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("NewBigQueryRecorder: %v", err)

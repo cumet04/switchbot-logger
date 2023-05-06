@@ -1,10 +1,17 @@
 package recorder
 
 import (
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,23 +27,96 @@ type Parser struct {
 	deviceTypes map[string]string
 }
 
-func NewParser() (*Parser, error) {
-	// TODO: APIで取ってくる
-	// APIで取ってくるようにしないとcloudfunctions上で動かない
-	bytes, err := os.ReadFile("./devices.json")
+func NewParser() *Parser {
+	return &Parser{}
+}
+
+func (p *Parser) fetchDeviceTypes(token string, secret string) error {
+	data, err := fetchDevices(token, secret)
+	if err != nil {
+		return err
+	}
+	if data.StatusCode != 100 {
+		return fmt.Errorf("switchbot API devicess; status code is not 100: %v", data)
+	}
+
+	types := make(map[string]string)
+	for _, d := range data.Body.DeviceList {
+		types[d.DeviceId] = d.DeviceType
+	}
+
+	p.deviceTypes = types
+	return nil
+}
+
+type DevicesSchema struct {
+	StatusCode int `json:"statusCode"`
+	Body       struct {
+		DeviceList []struct {
+			DeviceId           string `json:"deviceId"`
+			DeviceName         string `json:"deviceName"`
+			DeviceType         string `json:"deviceType"`
+			EnableCloudService bool   `json:"enableCloudService"`
+			HubDeviceId        string `json:"hubDeviceId"`
+		} `json:"deviceList"`
+		InfraredRemoteList []struct {
+			DeviceId    string `json:"deviceId"`
+			DeviceName  string `json:"deviceName"`
+			RemoteType  string `json:"remoteType"`
+			HubDeviceId string `json:"hubDeviceId"`
+		} `json:"infraredRemoteList"`
+	} `json:"body"`
+	Message string `json:"message"`
+}
+
+func fetchDevices(token string, secret string) (*DevicesSchema, error) {
+	resp, err := switchbotGet("https://api.switch-bot.com/v1.1/devices", token, secret)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var data DevicesSchema
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var types map[string]string
-	err = json.Unmarshal(bytes, &types)
-	if err != nil {
+	if err := json.Unmarshal(body, &data); err != nil {
 		return nil, err
 	}
 
-	return &Parser{
-		deviceTypes: types,
-	}, nil
+	return &data, nil
+}
+
+func switchbotGet(url string, token string, secret string) (*http.Response, error) {
+	// https://github.com/OpenWonderLabs/SwitchBotAPI/blob/21f905ba96147028d85517b517beef3a2d66bb50/README.md#authentication
+
+	// SecureRandom.hex(16)
+	k := make([]byte, 16)
+	if _, err := rand.Read(k); err != nil {
+		panic(err)
+	}
+	nonce := fmt.Sprintf("%x", k)
+
+	time := strconv.FormatInt(time.Now().UnixMilli(), 10)
+
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(token + time + nonce))
+	sig := h.Sum(nil)
+	sign := base64.StdEncoding.EncodeToString(sig)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", token)
+	req.Header.Set("sign", sign)
+	req.Header.Set("nonce", nonce)
+	req.Header.Set("t", time)
+
+	return http.DefaultClient.Do(req)
 }
 
 func (p *Parser) ParseMessage(msg string) ([]Record, error) {
@@ -94,7 +174,8 @@ func (p *Parser) extractAdStructures(msg string) ([]AdStructure, error) {
 }
 
 func (p *Parser) extractRecords(s AdStructure) ([]Record, error) {
-	devType, ok := p.deviceTypes[strings.ToUpper(s.DeviceAddress)]
+	deviceId := strings.ToUpper(strings.ReplaceAll(s.DeviceAddress, ":", ""))
+	devType, ok := p.deviceTypes[deviceId]
 	if !ok {
 		devType = "_unknown_"
 	}
@@ -104,6 +185,11 @@ func (p *Parser) extractRecords(s AdStructure) ([]Record, error) {
 		return p.parseMeterData(s)
 	case "Plug Mini (US)":
 		return p.parsePlugData(s)
+	case "Motion Sensor":
+		return p.parseMotionData(s)
+	case "Hub Mini":
+		// Hub Miniの情報は特に必要ない
+		return nil, nil
 	case "_unknown_":
 		return nil, nil
 	default:
@@ -191,4 +277,10 @@ func (p *Parser) parsePlugData(s AdStructure) ([]Record, error) {
 		{s.Time, s.DeviceAddress, RecordTypes.PowerOn, float32(poweron)},
 		{s.Time, s.DeviceAddress, RecordTypes.Load, load},
 	}, nil
+}
+
+func (p *Parser) parseMotionData(s AdStructure) ([]Record, error) {
+	// https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/motionsensor.md
+	// TODO: impl
+	return nil, nil
 }

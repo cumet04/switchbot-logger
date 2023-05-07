@@ -3,18 +3,18 @@ package viewer
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"google.golang.org/api/iterator"
+
+	"github.com/cumet04/switchbot-logger/switchbot"
 )
 
 func init() {
@@ -123,23 +123,22 @@ func devicesFor(metricType string) []Device {
 	return devices
 }
 
-func deviceIdsFor(class string) []string {
-	// MEMO: jsonの中のidを小文字にすればよさそう
-	bytes, err := os.ReadFile("./devices.json")
-	if err != nil {
-		panic(err) // TODO:
-	}
+var deviceIdsFor_devices *switchbot.DevicesSchema
 
-	var devices map[string]string
-	err = json.Unmarshal(bytes, &devices)
-	if err != nil {
-		panic(err) // TODO:
+func deviceIdsFor(class string) []string {
+	if deviceIdsFor_devices == nil {
+		var err error
+		deviceIdsFor_devices, err = switchbot.FetchDevices(os.Getenv("SWITCHBOT_TOKEN"), os.Getenv("SWITCHBOT_SECRET"))
+		if err != nil {
+			panic(err) // TODO:
+		}
 	}
+	devices := deviceIdsFor_devices
 
 	var deviceIds []string
-	for id, c := range devices {
-		if c == class {
-			deviceIds = append(deviceIds, id)
+	for _, c := range devices.Body.DeviceList {
+		if c.DeviceType == class {
+			deviceIds = append(deviceIds, c.DeviceId)
 		}
 	}
 	return deviceIds

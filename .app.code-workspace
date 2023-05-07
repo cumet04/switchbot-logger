@@ -9,12 +9,16 @@
     {
       "path": "./scanner"
     },
+    {
+      "path": "./switchbot"
+    },
   ],
   "settings": {
     "files.exclude": {
       // hide first-level folders from root
       "recorder": true,
       "scanner": true,
+      "switchbot": true,
     }
   }
 }

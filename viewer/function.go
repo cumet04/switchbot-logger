@@ -40,7 +40,13 @@ func HandleFunc(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(resp))
 }
 
-var rows [][]bigquery.Value
+type Results struct {
+	Temperature [][]bigquery.Value
+	Humidity    [][]bigquery.Value
+	Load        [][]bigquery.Value
+}
+
+var results *Results
 
 func main(ctx context.Context) (string, error) {
 	projectID := os.Getenv("PROJECT_ID")
@@ -50,11 +56,25 @@ func main(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to NewBigQueryClient: %v", err)
 	}
 
-	if rows == nil {
+	if results == nil {
 		// TODO: キャッシュクリアする手段
-		rows, err = fetchMetrics(ctx, client, "Temperature")
+		t, err := fetchMetrics(ctx, client, "Temperature")
 		if err != nil {
-			return "", fmt.Errorf("failed to fetchMetrics: %v", err)
+			return "", fmt.Errorf("failed to fetchMetrics temperature: %v", err)
+		}
+		h, err := fetchMetrics(ctx, client, "Humidity")
+		if err != nil {
+			return "", fmt.Errorf("failed to fetchMetrics humidity: %v", err)
+		}
+		l, err := fetchMetrics(ctx, client, "Load")
+		if err != nil {
+			return "", fmt.Errorf("failed to fetchMetrics load: %v", err)
+		}
+
+		results = &Results{
+			Temperature: t,
+			Humidity:    h,
+			Load:        l,
 		}
 	}
 
@@ -64,9 +84,7 @@ func main(ctx context.Context) (string, error) {
 	}
 
 	var resp bytes.Buffer
-	err = tmpl.Execute(&resp, struct {
-		Metrics [][]bigquery.Value
-	}{rows})
+	err = tmpl.Execute(&resp, results)
 	if err != nil {
 		return "", fmt.Errorf("failed to tmpl.Execute: %v", err)
 	}
@@ -76,7 +94,7 @@ func main(ctx context.Context) (string, error) {
 
 func fetchMetrics(ctx context.Context, client *BigQueryClient, deviceType string) ([][]bigquery.Value, error) {
 	devices := devicesFor(deviceType)
-	queryString := buildSampledMetricsQuery(devices, 6, 100)
+	queryString := buildSampledMetricsQuery(devices, deviceType, 6, 100)
 
 	var headers []bigquery.Value
 	headers = append(headers, "Time")
@@ -135,10 +153,11 @@ func deviceIdsFor(class string) []Device {
 	return deviceIds
 }
 
-func buildSampledMetricsQuery(devices []Device, timeRangeInHours int, sampleSize int) string {
+func buildSampledMetricsQuery(devices []Device, deviceType string, timeRangeInHours int, sampleSize int) string {
 	var devQueries []string
 	for _, d := range devices {
-		q := fmt.Sprintf("AVG(IF (DeviceId = '%s', Value, NULL)) AS %s", d.Id, d.Name)
+		mac := strings.ToLower(id2mac(d.Id))
+		q := fmt.Sprintf("AVG(IF (DeviceId = '%s', Value, NULL))", mac)
 		devQueries = append(devQueries, q)
 	}
 
@@ -155,9 +174,14 @@ FROM
   switchbot.metrics
 WHERE
   Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL %d HOUR)
+	AND Type = '%s'
 GROUP BY 1
 ORDER BY 1
-`, samplingInterval, strings.Join(devQueries, ","), timeRangeInHours)
+`, samplingInterval, strings.Join(devQueries, ","), timeRangeInHours, deviceType)
+}
+
+func id2mac(id string) string {
+	return id[0:2] + ":" + id[2:4] + ":" + id[4:6] + ":" + id[6:8] + ":" + id[8:10] + ":" + id[10:12]
 }
 
 type BigQueryClient struct {

@@ -5,50 +5,56 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>switchbot logger viewer</title>
-  <script id="metrics" type="application/json">{{ .Metrics }}</script>
+  <script id="Temperature" type="application/json">{{ .Temperature }}</script>
+  <script id="Humidity" type="application/json">{{ .Humidity }}</script>
+  <script id="Load" type="application/json">{{ .Load }}</script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
   <style>
     body {
       margin: 0;
     }
-
   </style>
 </head>
 
 <body>
-  <div id="dashboard">
-    <div id="chart"></div>
-  </div>
+  <div id="t"></div>
+  <div id="h"></div>
+  <div id="l"></div>
 
   <script>
-    // [
-    //   [time, ...metric_names],
-    //   [time, ...metric_values],
-    // ]
-    // という形式のデータを
-    // [
-    //   {
-    //     name: metric_name,
-    //     data: [[time, metric_value], ...]
-    //   },
-    //   ...
-    // ]
-    // という形式に変換する
-    const [headers, ...metrics] = JSON.parse(document.getElementById('metrics').innerHTML);
-    const series = headers.slice(1).map((device, index) => ({
-      name: device,
-      data: metrics.map((m) => {
-        const [time, ...values] = m;
-        return [time, values[index]];
-      })
-    }))
+    const t = remap(JSON.parse(document.getElementById('Temperature').innerHTML));
+    render(document.querySelector('#t'), 'Temperature', t)
 
-    render(
-      document.querySelector('#chart'),
-      'Temperature',
-      series
-    )
+    const h = remap(JSON.parse(document.getElementById('Humidity').innerHTML));
+    render(document.querySelector('#h'), 'Humidity', h)
+
+    const l = remap(JSON.parse(document.getElementById('Load').innerHTML));
+    render(document.querySelector('#l'), 'Load', l)
+
+    function remap(queryResult) {
+      // [
+      //   [time, ...metric_names],
+      //   [time, ...metric_values],
+      // ]
+      // という形式のデータを
+      // [
+      //   {
+      //     name: metric_name,
+      //     data: [[time, metric_value], ...]
+      //   },
+      //   ...
+      // ]
+      // という形式に変換する
+      const [headers, ...metrics] = queryResult
+      return headers.slice(1).map((device, index) => ({
+        name: device,
+        data: metrics.map((m) => {
+          const [time, ...values] = m;
+          return [time, values[index]];
+        })
+      }))
+    }
 
     function render(element, title, series) {
       const options = {

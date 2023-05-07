@@ -102,29 +102,18 @@ type Device struct {
 }
 
 func devicesFor(metricType string) []Device {
-	var deviceIds []string
 	if metricType == "Humidity" || metricType == "Temperature" {
-		deviceIds = deviceIdsFor("Meter")
+		return deviceIdsFor("Meter")
 	} else if metricType == "Load" {
-		deviceIds = deviceIdsFor("Plug Mini (US)")
-	}
-	if len(deviceIds) == 0 {
+		return deviceIdsFor("Plug Mini (US)")
+	} else {
 		panic("invalid metric type")
 	}
-
-	var devices []Device
-	for _, id := range deviceIds {
-		devices = append(devices, Device{
-			Id:   strings.ToLower(id),             // MEMO: これの大文字小文字ってどこで正規化すべき？
-			Name: strings.ReplaceAll(id, ":", ""), // TODO: デバイス名をマッピングする
-		})
-	}
-	return devices
 }
 
 var deviceIdsFor_devices *switchbot.DevicesSchema
 
-func deviceIdsFor(class string) []string {
+func deviceIdsFor(class string) []Device {
 	if deviceIdsFor_devices == nil {
 		var err error
 		deviceIdsFor_devices, err = switchbot.FetchDevices(os.Getenv("SWITCHBOT_TOKEN"), os.Getenv("SWITCHBOT_SECRET"))
@@ -134,10 +123,13 @@ func deviceIdsFor(class string) []string {
 	}
 	devices := deviceIdsFor_devices
 
-	var deviceIds []string
+	var deviceIds []Device
 	for _, c := range devices.Body.DeviceList {
 		if c.DeviceType == class {
-			deviceIds = append(deviceIds, c.DeviceId)
+			deviceIds = append(deviceIds, Device{
+				Id:   strings.ToLower(c.DeviceId), // MEMO: Idはテーブルのレコードの時点で大文字（APIが言うDeviceIdに準拠）が良いんだと思う
+				Name: c.DeviceName,
+			})
 		}
 	}
 	return deviceIds

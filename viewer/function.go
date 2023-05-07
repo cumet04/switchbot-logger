@@ -21,14 +21,13 @@ func init() {
 	functions.HTTP("HandleFunc", HandleFunc)
 }
 
-type Metric struct {
-	Time     time.Time `bigquery:"Time"`
-	DeviceId string    `bigquery:"DeviceId"`
-	Type     string    `bigquery:"Type"`
-	Value    float32   `bigquery:"Value"`
-}
-
 func HandleFunc(w http.ResponseWriter, r *http.Request) {
+	// pathで簡易認証を設ける
+	if r.URL.Path != os.Getenv("AUTH_PATH") {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	ctx := r.Context()
 
 	resp, err := main(ctx)

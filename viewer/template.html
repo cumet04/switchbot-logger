@@ -71,9 +71,13 @@
           align: 'center',
         },
         yaxis: {
-          // 縦軸の値は整数部のみ表示する。
-          // decimalsInFloatを使うとhover時の値まで丸められるため、labels.formatterで対応する
-          labels: { formatter: (v) => v },
+          // 縦軸のラベル値をいい感じに見やすくする。
+          // 値の幅によっては45,50,55などちょうどいい整数が渡ってくるが、値の幅が小さい場合（特に気温）には
+          // 小数点以下の非常に細かい値が入ることがある。
+          // もともと整数の場合にはそのまま、そうでない場合は小数点以下1桁まで表示する。
+          labels: {
+            formatter: (v) => Number.isInteger(v) ? v : v.toFixed(1)
+          },
         },
         xaxis: {
           type: 'datetime',

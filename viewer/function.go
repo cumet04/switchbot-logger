@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -78,7 +79,7 @@ func main(ctx context.Context) (string, error) {
 		}
 	}
 
-	tmpl, err := template.ParseFiles("template.html")
+	tmpl, err := parseTemplate("template.html")
 	if err != nil {
 		return "", fmt.Errorf("failed to template.ParseFiles: %v", err)
 	}
@@ -90,6 +91,23 @@ func main(ctx context.Context) (string, error) {
 	}
 
 	return resp.String(), nil
+}
+
+func parseTemplate(name string) (*template.Template, error) {
+	var f *os.File
+	f, err := os.OpenFile(name, os.O_RDONLY, 0)
+	if os.IsNotExist(err) {
+		// https://zenn.dev/kmtym1998/articles/ae997382235acb
+		f, err = os.OpenFile("serverless_function_source_code/"+name, os.O_RDONLY, 0)
+	}
+	if err != nil {
+		return nil, err
+	}
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return template.New(name).Parse(string(b))
 }
 
 func fetchMetrics(ctx context.Context, client *BigQueryClient, deviceType string) ([][]bigquery.Value, error) {

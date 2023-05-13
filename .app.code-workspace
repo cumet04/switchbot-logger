@@ -15,6 +15,9 @@
     {
       "path": "./viewer"
     },
+    {
+      "path": "./infra"
+    },
   ],
   "settings": {
     "files.exclude": {
@@ -23,6 +26,7 @@
       "raspi": true,
       "switchbot": true,
       "viewer": true,
+      "infra": true,
     }
   }
 }

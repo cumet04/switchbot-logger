@@ -12,6 +12,9 @@
     {
       "path": "./switchbot"
     },
+    {
+      "path": "./viewer"
+    },
   ],
   "settings": {
     "files.exclude": {
@@ -19,6 +22,7 @@
       "recorder": true,
       "scanner": true,
       "switchbot": true,
+      "viewer": true,
     }
   }
 }

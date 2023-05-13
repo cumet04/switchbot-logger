@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>switchbot logger viewer</title>
+  <script id="Temperature" type="application/json">{{ .Temperature }}</script>
+  <script id="Humidity" type="application/json">{{ .Humidity }}</script>
+  <script id="Load" type="application/json">{{ .Load }}</script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="t"></div>
+  <div id="h"></div>
+  <div id="l"></div>
+
+  <script>
+    const t = remap(JSON.parse(document.getElementById('Temperature').innerHTML));
+    render(document.querySelector('#t'), 'Temperature', t)
+
+    const h = remap(JSON.parse(document.getElementById('Humidity').innerHTML));
+    render(document.querySelector('#h'), 'Humidity', h)
+
+    const l = remap(JSON.parse(document.getElementById('Load').innerHTML));
+    render(document.querySelector('#l'), 'Load', l)
+
+    function remap(queryResult) {
+      // [
+      //   [time, ...metric_names],
+      //   [time, ...metric_values],
+      // ]
+      // という形式のデータを
+      // [
+      //   {
+      //     name: metric_name,
+      //     data: [[time, metric_value], ...]
+      //   },
+      //   ...
+      // ]
+      // という形式に変換する
+      const [headers, ...metrics] = queryResult
+      return headers.slice(1).map((device, index) => ({
+        name: device,
+        data: metrics.map((m) => {
+          const [time, ...values] = m;
+          return [time, values[index]];
+        })
+      }))
+    }
+
+    function render(element, title, series) {
+      const options = {
+        series,
+        chart: {
+          type: 'line',
+          height: 350,
+          animations: { enabled: false }, // デフォルトのアニメーションが衝撃的にウザいので無効化
+        },
+        stroke: { width: 2 }, // デフォルトの線が異様に太いので調整
+        title: {
+          text: title,
+          align: 'center',
+        },
+        yaxis: {
+          // 縦軸のラベル値をいい感じに見やすくする。
+          // 値の幅によっては45,50,55などちょうどいい整数が渡ってくるが、値の幅が小さい場合（特に気温）には
+          // 小数点以下の非常に細かい値が入ることがある。
+          // もともと整数の場合にはそのまま、そうでない場合は小数点以下1桁まで表示する。
+          labels: {
+            formatter: (v) => Number.isInteger(v) ? v : v.toFixed(1)
+          },
+        },
+        xaxis: {
+          type: 'datetime',
+          labels: {
+            datetimeUTC: false
+          },
+          tooltip: {
+            // hover時の横軸の値は時刻のみ表示する
+            formatter: (v) => new Date(v).toLocaleString('ja-JP', { timeStyle: "short" })
+          }
+        },
+      };
+
+      new ApexCharts(element, options).render();
+    }
+  </script>
+</body>
+
+</html>

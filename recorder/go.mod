@@ -5,6 +5,7 @@ go 1.19
 require (
 	cloud.google.com/go/bigquery v1.8.0
 	github.com/GoogleCloudPlatform/functions-framework-go v1.7.1
+	github.com/cumet04/switchbot-logger/switchbot v0.0.0-20230507131955-9991f3aaee12
 	github.com/joho/godotenv v1.5.1
 )
 

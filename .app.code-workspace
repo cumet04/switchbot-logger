@@ -7,7 +7,7 @@
       "path": "./recorder"
     },
     {
-      "path": "./scanner"
+      "path": "./raspi"
     },
     {
       "path": "./switchbot"
@@ -20,7 +20,7 @@
     "files.exclude": {
       // hide first-level folders from root
       "recorder": true,
-      "scanner": true,
+      "raspi": true,
       "switchbot": true,
       "viewer": true,
     }

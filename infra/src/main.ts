@@ -2,6 +2,7 @@ import {Construct} from 'constructs';
 import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {ServiceAccount} from './serviceAccount';
+import {BigqueryDataset, BigqueryTable} from './bigquery';
 
 declare global {
   type EnvType = 'production' | 'development';
@@ -44,6 +45,19 @@ class MyStack extends TerraformStack {
       'bigquery.tables.get',
       'bigquery.tables.updateData',
     ]);
+
+    const schema = Object.entries({
+      Time: 'TIMESTAMP',
+      DeviceId: 'STRING',
+      Type: 'STRING',
+      Value: 'FLOAT',
+    }).map(([name, type]) => ({
+      mode: 'NULLABLE',
+      name,
+      type,
+    }));
+    new BigqueryDataset(this, 'switchbot');
+    new BigqueryTable(this, 'switchbot', 'metrics', JSON.stringify(schema));
   }
 }
 

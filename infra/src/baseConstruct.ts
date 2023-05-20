@@ -15,4 +15,8 @@ export class BaseConstruct extends Construct {
   get projectId() {
     return this.node.getContext('gcp_project_id') as string;
   }
+
+  get gcpLocation() {
+    return this.node.getContext('gcp_location') as string;
+  }
 }

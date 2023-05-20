@@ -19,6 +19,7 @@ class MyStack extends TerraformStack {
 
     this.node.setContext('env', env);
     this.node.setContext('gcp_project_id', gcpProjectId);
+    this.node.setContext('gcp_location', 'asia-northeast1');
 
     new RemoteBackend(this, {
       hostname: 'app.terraform.io',

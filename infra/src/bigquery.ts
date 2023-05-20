@@ -26,7 +26,7 @@ export class BigqueryDataset extends BaseConstruct {
 
     new gBigqueryDataset(this, 'this', {
       datasetId,
-      location: 'asia-northeast1',
+      location: this.gcpLocation,
     });
   }
 }

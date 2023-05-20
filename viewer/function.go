@@ -112,7 +112,7 @@ func parseTemplate(name string) (*template.Template, error) {
 
 func fetchMetrics(ctx context.Context, client *BigQueryClient, deviceType string) ([][]bigquery.Value, error) {
 	devices := devicesFor(deviceType)
-	queryString := buildSampledMetricsQuery(devices, deviceType, 6, 100)
+	queryString := buildSampledMetricsQuery(devices, deviceType, 4, 200)
 
 	var headers []bigquery.Value
 	headers = append(headers, "Time")

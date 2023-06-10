@@ -29,12 +29,6 @@ class MyStack extends TerraformStack {
       },
     });
 
-    // terraform cloud側から入れるGCP認証情報
-    new TerraformVariable(this, 'GOOGLE_CREDENTIALS', {
-      type: 'string',
-      sensitive: true,
-    });
-
     new GoogleProvider(this, 'gcp', {
       project: gcpProjectId,
     });

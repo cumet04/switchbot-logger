@@ -5,10 +5,12 @@ import {ProjectIamMember} from '@cdktf/provider-google/lib/project-iam-member';
 import {BaseConstruct} from './baseConstruct';
 
 export class ServiceAccount extends BaseConstruct {
+  account: gServiceAccount;
+
   constructor(scope: Construct, name: string, permissions: string[]) {
     super(scope, `ServiceAccount_${name}`);
 
-    const account = new gServiceAccount(this, 'account', {
+    this.account = new gServiceAccount(this, 'account', {
       accountId: name,
       displayName: name,
     });
@@ -22,7 +24,7 @@ export class ServiceAccount extends BaseConstruct {
     new ProjectIamMember(this, 'member', {
       project: this.projectId,
       role: role.name,
-      member: `serviceAccount:${account.email}`,
+      member: `serviceAccount:${this.account.email}`,
     });
   }
 }

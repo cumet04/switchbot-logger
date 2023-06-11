@@ -1,8 +1,11 @@
+import * as path from 'path';
 import {Construct} from 'constructs';
-import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
+import {App, RemoteBackend, TerraformStack} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {ServiceAccount} from './serviceAccount';
 import {BigqueryDataset, BigqueryTable} from './bigquery';
+import {CloudFunctionGo} from './cloudFunctions';
+import {Secret} from './secretManager';
 
 declare global {
   type EnvType = 'production' | 'development';
@@ -33,13 +36,36 @@ class MyStack extends TerraformStack {
       project: gcpProjectId,
     });
 
-    new ServiceAccount(this, 'recorder', [
-      // MEMO: 対象リソース絞れるか？
+    const token = new Secret(this, 'switchbot_token');
+    const secret = new Secret(this, 'switchbot_secret');
+
+    const recorderAuthPath = new Secret(this, 'recorder_auth_path');
+
+    const saRecorder = new ServiceAccount(this, 'recorder', [
+      // TODO: 対象リソース絞れるか？
       'bigquery.datasets.get',
       'bigquery.datasets.getIamPolicy',
       'bigquery.tables.get',
       'bigquery.tables.updateData',
+      'secretmanager.versions.access',
     ]);
+
+    const recorderSourcePath = path.resolve(__dirname, '../../recorder');
+    new CloudFunctionGo(this, 'recorder', {
+      sourcePath: recorderSourcePath,
+      allowUnauthenticated: true,
+      secrets: {
+        AUTH_PATH: recorderAuthPath.secretId,
+        SWITCHBOT_TOKEN: token.secretId,
+        SWITCHBOT_SECRET: secret.secretId,
+      },
+      serviceConfig: {
+        serviceAccountEmail: saRecorder.account.email,
+        environmentVariables: {
+          PROJECT_ID: gcpProjectId,
+        },
+      },
+    });
 
     const schema = Object.entries({
       Time: 'TIMESTAMP',

@@ -6,13 +6,11 @@ import (
 
 	"github.com/GoogleCloudPlatform/functions-framework-go/funcframework"
 	_ "github.com/cumet04/switchbot-logger/recorder"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load("env.yaml")
-	if err != nil {
-		log.Printf("Error loading env.yaml: %v", err)
+	if os.Getenv("AUTH_PATH") == "" {
+		os.Setenv("AUTH_PATH", "/recorder")
 	}
 
 	port := "8080"

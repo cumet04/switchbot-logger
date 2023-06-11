@@ -111,7 +111,13 @@ class MyStack extends TerraformStack {
       name,
       type,
     }));
-    new BigqueryTable(this, 'switchbot', 'metrics', JSON.stringify(schema));
+    new BigqueryTable(this, 'switchbot', 'metrics', JSON.stringify(schema), {
+      timePartitioning: {
+        type: 'DAY',
+        field: 'Time',
+      },
+      deletionProtection: false,
+    });
   }
 }
 

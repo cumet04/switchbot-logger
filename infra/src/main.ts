@@ -40,11 +40,12 @@ class MyStack extends TerraformStack {
     const secret = new Secret(this, 'switchbot_secret');
 
     this.setupRecorder(token, secret);
+    this.setupViewer(token, secret);
     this.setupMetricsTable();
   }
 
   private setupRecorder(token: Secret, secret: Secret): void {
-    const saRecorder = new ServiceAccount(this, 'recorder', [
+    const sa = new ServiceAccount(this, 'recorder', [
       // TODO: 対象リソース絞れるか？
       'bigquery.datasets.get',
       'bigquery.datasets.getIamPolicy',
@@ -64,7 +65,32 @@ class MyStack extends TerraformStack {
         SWITCHBOT_SECRET: secret.secretId,
       },
       serviceConfig: {
-        serviceAccountEmail: saRecorder.account.email,
+        serviceAccountEmail: sa.account.email,
+        environmentVariables: {
+          PROJECT_ID: this.gcpProjectId,
+        },
+      },
+    });
+  }
+
+  private setupViewer(token: Secret, secret: Secret): void {
+    const sa = new ServiceAccount(this, 'viewer', [
+      // TODO: 対象リソース絞れるか？
+      'bigquery.jobs.create',
+      'bigquery.tables.getData',
+      'secretmanager.versions.access',
+    ]);
+    const authPath = new Secret(this, 'viewer_auth_path');
+    new CloudFunctionGo(this, 'viewer', {
+      sourcePath: path.resolve(__dirname, '../../viewer'),
+      allowUnauthenticated: true,
+      secrets: {
+        AUTH_PATH: authPath.secretId,
+        SWITCHBOT_TOKEN: token.secretId,
+        SWITCHBOT_SECRET: secret.secretId,
+      },
+      serviceConfig: {
+        serviceAccountEmail: sa.account.email,
         environmentVariables: {
           PROJECT_ID: this.gcpProjectId,
         },

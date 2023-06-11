@@ -15,8 +15,8 @@ class MyStack extends TerraformStack {
   constructor(
     scope: Construct,
     id: string,
-    env: EnvType,
-    gcpProjectId: string
+    private env: EnvType,
+    private gcpProjectId: string
   ) {
     super(scope, id);
 
@@ -39,8 +39,11 @@ class MyStack extends TerraformStack {
     const token = new Secret(this, 'switchbot_token');
     const secret = new Secret(this, 'switchbot_secret');
 
-    const recorderAuthPath = new Secret(this, 'recorder_auth_path');
+    this.setupRecorder(token, secret);
+    this.setupMetricsTable();
+  }
 
+  private setupRecorder(token: Secret, secret: Secret): void {
     const saRecorder = new ServiceAccount(this, 'recorder', [
       // TODO: 対象リソース絞れるか？
       'bigquery.datasets.get',
@@ -50,22 +53,27 @@ class MyStack extends TerraformStack {
       'secretmanager.versions.access',
     ]);
 
-    const recorderSourcePath = path.resolve(__dirname, '../../recorder');
+    const authPath = new Secret(this, 'recorder_auth_path');
+
     new CloudFunctionGo(this, 'recorder', {
-      sourcePath: recorderSourcePath,
+      sourcePath: path.resolve(__dirname, '../../recorder'),
       allowUnauthenticated: true,
       secrets: {
-        AUTH_PATH: recorderAuthPath.secretId,
+        AUTH_PATH: authPath.secretId,
         SWITCHBOT_TOKEN: token.secretId,
         SWITCHBOT_SECRET: secret.secretId,
       },
       serviceConfig: {
         serviceAccountEmail: saRecorder.account.email,
         environmentVariables: {
-          PROJECT_ID: gcpProjectId,
+          PROJECT_ID: this.gcpProjectId,
         },
       },
     });
+  }
+
+  private setupMetricsTable(): void {
+    new BigqueryDataset(this, 'switchbot');
 
     const schema = Object.entries({
       Time: 'TIMESTAMP',
@@ -77,7 +85,6 @@ class MyStack extends TerraformStack {
       name,
       type,
     }));
-    new BigqueryDataset(this, 'switchbot');
     new BigqueryTable(this, 'switchbot', 'metrics', JSON.stringify(schema));
   }
 }

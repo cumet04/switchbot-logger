@@ -16,15 +16,11 @@ Raspi上のコードや設定はごく最低限にし、デプロイやメンテ
 ## デプロイ
 主に自分用のメモ
 
-### recorder
-* GCPプロジェクトは適宜セットアップ
-* BigQueryはdataset`switcbot`, table`metrics`で作る（コード内決め打ち）
-  - Time (TIMESTAMP)
-  - DeviceId (STRING)
-  - Type (STRING)
-  - Value (FLOAT)
-* env.yamlを適宜設定
-* `deploy.sh`
+### infra
+* GCPプロジェクトは適宜セットアップ。APIも適宜有効化
+* infra配下で`npm run apply development (or production)`
+  - 初期セットアップ時は多分コケる。SecretManagerで各種値を埋めてやり直す
+* recorder/viewerはそれぞれ上記applyでデプロイ
 
 ### Raspberry Pi
 ※Raspberry OS Lite 64bit (bullseye)で確認

@@ -116,7 +116,6 @@ class MyStack extends TerraformStack {
         type: 'DAY',
         field: 'Time',
       },
-      deletionProtection: false,
     });
   }
 }

@@ -109,12 +109,16 @@ func (p *Parser) extractRecords(s AdStructure) ([]Record, error) {
 	switch devType {
 	case "Meter":
 		return p.parseMeterData(s)
+	case "WoIOSensor":
+		return p.parseWoIOSensorData(s)
 	case "Plug Mini (US)":
 		fallthrough // USとJPは同じ仕様
 	case "Plug Mini (JP)":
 		return p.parsePlugData(s)
 	case "Motion Sensor":
 		return p.parseMotionData(s)
+	case "Ceiling Light":
+		return p.parseCeilingLightData(s)
 	case "Hub Mini":
 		// Hub Miniの情報は特に必要ない
 		return nil, nil
@@ -209,6 +213,18 @@ func (p *Parser) parsePlugData(s AdStructure) ([]Record, error) {
 
 func (p *Parser) parseMotionData(s AdStructure) ([]Record, error) {
 	// https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/motionsensor.md
+	// TODO: impl
+	return nil, nil
+}
+
+func (p *Parser) parseCeilingLightData(s AdStructure) ([]Record, error) {
+	// 公式仕様書にまだ記載がない
+	// TODO: impl
+	return nil, nil
+}
+
+func (p *Parser) parseWoIOSensorData(s AdStructure) ([]Record, error) {
+	// 公式仕様書にまだ記載がない。。。meterのやつは動かなかった
 	// TODO: impl
 	return nil, nil
 }

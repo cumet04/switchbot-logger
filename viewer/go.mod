@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/bigquery v1.49.0
 	github.com/GoogleCloudPlatform/functions-framework-go v1.6.1
 	github.com/cumet04/switchbot-logger/switchbot v0.0.0-20230507131955-9991f3aaee12
-	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.114.0
 )
 

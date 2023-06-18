@@ -30,6 +30,7 @@
             src: files/scanner.service
             dest: /etc/systemd/system/scanner.service
         - systemd:
+            enabled: true
             state: restarted
             daemon_reload: true
             name: scanner

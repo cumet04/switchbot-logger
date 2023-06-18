@@ -6,7 +6,7 @@ SwitchBotのプラグや温湿度計の計測データを取得・蓄積する�
 ## コンポーネント構成
 * Raspberry Pi (as bluetooth hardware)
   - bluepyでAdvertisement (生データ) を読み取り、定期的にrecorderにデータを渡す
-  - scannerディレクトリ以下
+  - raspiディレクトリ以下
 * recorder (Cloud Function)
   - Advertisementを入力として受け取り、SwitchBotのセンサデータとしてパースし、BigQueryに貯める
   - recorderディレクトリ以下
@@ -16,20 +16,16 @@ Raspi上のコードや設定はごく最低限にし、デプロイやメンテ
 ## デプロイ
 主に自分用のメモ
 
-### recorder
-* GCPプロジェクトは適宜セットアップ
-* BigQueryはdataset`switcbot`, table`metrics`で作る（コード内決め打ち）
-  - Time (TIMESTAMP)
-  - DeviceId (STRING)
-  - Type (STRING)
-  - Value (FLOAT)
-* env.yamlを適宜設定
-* `deploy.sh`
+### infra
+* GCPプロジェクトは適宜セットアップ。APIも適宜有効化
+* infra配下で`npm run apply development (or production)`
+  - 初期セットアップ時は多分コケる。SecretManagerで各種値を埋めてやり直す
+* recorder/viewerはそれぞれ上記applyでデプロイ
 
 ### Raspberry Pi
 ※Raspberry OS Lite 64bit (bullseye)で確認
 
-デバイスにsshできるように鍵など設定し、必要に応じて`scanner/hosts`ファイルにホスト名を入れておく。
+デバイスにsshできるように鍵など設定し、必要に応じて`raspi/hosts`ファイルにホスト名を入れておく。
 
 また、recorderのエンドポイントを`RECORDER_URL`環境変数から読めるようにしつつ
 ```

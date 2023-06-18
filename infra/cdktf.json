@@ -1,0 +1,12 @@
+{
+  "language": "typescript",
+  "app": "./node_modules/.bin/ts-node --transpile-only src/main.ts",
+  "projectId": "b1de02be-3c54-4e6d-98ee-1e2bbf67ee94",
+  "sendCrashReports": "true",
+  "terraformProviders": [],
+  "terraformModules": [],
+  "context": {
+    "excludeStackIdFromLogicalIds": "true",
+    "allowSepCharsInLogicalIds": "true"
+  }
+}

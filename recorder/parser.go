@@ -224,7 +224,31 @@ func (p *Parser) parseCeilingLightData(s AdStructure) ([]Record, error) {
 }
 
 func (p *Parser) parseWoIOSensorData(s AdStructure) ([]Record, error) {
-	// 公式仕様書にまだ記載がない。。。meterのやつは動かなかった
-	// TODO: impl
-	return nil, nil
+	// 公式仕様書に記載がないので、個人ブログを参照 https://tsuzureya.net/?p=812
+
+	if s.AdType != 255 { // Manufacturer
+		return nil, nil
+	}
+	// 参考ブログのコメント欄より、ServiceDataにバッテリ残量がありそうなことが書かれているが
+	// バッテリ残量が減らなすぎて検証できない。バッテリが減りそうになったらまた考える
+
+	bytes, err := hex.DecodeString(s.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	tempIsNegative := bytes[11]&0b10000000 == 0
+	tempInt := int(bytes[11] & 0b01111111)
+	tempReal := float32(bytes[10]&0b00001111) / 10
+	temperature := float32(tempInt) + tempReal
+	if tempIsNegative {
+		temperature = -temperature
+	}
+
+	humidity := float32(bytes[12] & 0b01111111)
+
+	return []Record{
+		{s.Time, s.DeviceAddress, RecordTypes.Temperature, temperature},
+		{s.Time, s.DeviceAddress, RecordTypes.Humidity, humidity},
+	}, nil
 }

@@ -130,6 +130,33 @@ func Test_parsePlugData(t *testing.T) {
 	}
 }
 
+func Test_parseWoIOSensorData(t *testing.T) {
+	now := time.Now()
+	cases := map[string]struct {
+		Input AdStructure
+		Want  []Record
+	}{
+		"AdTypeが255(Manufacturer)の場合は各種情報が返る": {
+			Input: AdStructure{now, "xy:96:43:12:61:5b", 255, "6909e02b7e6b4f4a610300994600"},
+			Want: []Record{
+				{now, "xy:96:43:12:61:5b", "Temperature", 25.0},
+				{now, "xy:96:43:12:61:5b", "Humidity", 70},
+			},
+		},
+	}
+
+	p := NewParser()
+	for name, c := range cases {
+		records, err := p.parseWoIOSensorData(c.Input)
+		if err != nil {
+			t.Errorf("Case %s failed: want no err, but got: %v", name, err)
+		}
+		if !containExactly(c.Want, records) {
+			t.Errorf("Case %s failed:\nwant %v,\ngot %v", name, c.Want, records)
+		}
+	}
+}
+
 func containExactly[T comparable](as []T, bs []T) bool {
 	if len(as) != len(bs) {
 		return false

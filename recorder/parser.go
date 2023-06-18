@@ -110,6 +110,8 @@ func (p *Parser) extractRecords(s AdStructure) ([]Record, error) {
 	case "Meter":
 		return p.parseMeterData(s)
 	case "Plug Mini (US)":
+		fallthrough // USとJPは同じ仕様
+	case "Plug Mini (JP)":
 		return p.parsePlugData(s)
 	case "Motion Sensor":
 		return p.parseMotionData(s)

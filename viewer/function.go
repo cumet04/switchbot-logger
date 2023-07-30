@@ -139,9 +139,15 @@ type Device struct {
 
 func devicesFor(metricType string) []Device {
 	if metricType == "Humidity" || metricType == "Temperature" {
-		return deviceIdsFor("Meter")
+		return append(
+			deviceIdsFor("Meter"),
+			deviceIdsFor("WoIOSensor")...,
+		)
 	} else if metricType == "Load" {
-		return deviceIdsFor("Plug Mini (US)")
+		return append(
+			deviceIdsFor("Plug Mini (US)"),
+			deviceIdsFor("Plug Mini (JP)")...,
+		)
 	} else {
 		panic("invalid metric type")
 	}

@@ -1,0 +1,22 @@
+name: "dev infra plan on PR"
+
+on: [pull_request]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: ./.github/actions/cdktf-action
+        with:
+          stackName: development
+          mode: plan-only
+          terraformCloudToken: ${{ secrets.TF_API_TOKEN }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -22,7 +22,7 @@ export class ServiceAccount extends BaseConstruct {
     });
 
     new ProjectIamMember(this, 'member', {
-      project: this.projectId,
+      project: this.projectId.value,
       role: role.name,
       member: `serviceAccount:${this.account.email}`,
     });

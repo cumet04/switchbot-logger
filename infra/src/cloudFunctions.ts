@@ -63,7 +63,7 @@ export class CloudFunctionGo extends BaseConstruct {
           ([k, v]) => ({
             key: k,
             secret: v,
-            projectId: this.projectId,
+            projectId: this.projectId.value,
             version: 'latest',
           })
         ),

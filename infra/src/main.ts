@@ -1,39 +1,49 @@
 import * as path from 'path';
 import {Construct} from 'constructs';
-import {App, RemoteBackend, TerraformStack} from 'cdktf';
+import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {ServiceAccount} from './serviceAccount';
 import {BigqueryDataset, BigqueryTable} from './bigquery';
 import {CloudFunctionGo} from './cloudFunctions';
 import {Secret} from './secretManager';
+import {AppContext} from './baseConstruct';
 
 declare global {
   type EnvType = 'production' | 'development';
 }
 
 class MyStack extends TerraformStack {
-  constructor(
-    scope: Construct,
-    id: string,
-    private env: EnvType,
-    private gcpProjectId: string
-  ) {
+  private projectId: TerraformVariable;
+
+  constructor(scope: Construct, id: string, env: EnvType) {
     super(scope, id);
 
-    this.node.setContext('env', env);
-    this.node.setContext('gcp_project_id', gcpProjectId);
-    this.node.setContext('gcp_location', 'asia-northeast1');
+    // TerraformVariableなどのリソース定義の後にsetContextができないという制約があるため
+    // 一旦空オブジェクトをsetContextしておき、後から値を入れることで制約を回避する
+    const context: Partial<AppContext> = {};
+    this.node.setContext('appContext', context);
+
+    this.projectId = new TerraformVariable(this, 'project_id', {
+      type: 'string',
+    });
+    const tfOrganization = new TerraformVariable(this, 'tf_organization', {
+      type: 'string',
+    });
+
+    context.env = env;
+    context.gcpProjectId = this.projectId;
+    context.gcpLocation = 'asia-northeast1';
 
     new RemoteBackend(this, {
       hostname: 'app.terraform.io',
-      organization: mustEnv('TF_ORGANIZATION'),
+      organization: tfOrganization.value,
       workspaces: {
         name: `switchbot-logger_${env}`,
       },
     });
 
     new GoogleProvider(this, 'gcp', {
-      project: gcpProjectId,
+      project: this.projectId.value,
     });
 
     const token = new Secret(this, 'switchbot_token');
@@ -67,7 +77,7 @@ class MyStack extends TerraformStack {
       serviceConfig: {
         serviceAccountEmail: sa.account.email,
         environmentVariables: {
-          PROJECT_ID: this.gcpProjectId,
+          PROJECT_ID: this.projectId.value,
         },
       },
     });
@@ -92,7 +102,7 @@ class MyStack extends TerraformStack {
       serviceConfig: {
         serviceAccountEmail: sa.account.email,
         environmentVariables: {
-          PROJECT_ID: this.gcpProjectId,
+          PROJECT_ID: this.projectId.value,
         },
       },
     });
@@ -120,18 +130,7 @@ class MyStack extends TerraformStack {
   }
 }
 
-function mustEnv(name: string): string {
-  const value = process.env[name];
-  if (value === undefined) throw new Error(`${name} is not defined`);
-  return value;
-}
-
 const app = new App();
-new MyStack(app, 'production', 'production', mustEnv('PROJECT_ID_PRODUCTION'));
-new MyStack(
-  app,
-  'development',
-  'development',
-  mustEnv('PROJECT_ID_DEVELOPMENT')
-);
+new MyStack(app, 'production', 'production');
+new MyStack(app, 'development', 'development');
 app.synth();

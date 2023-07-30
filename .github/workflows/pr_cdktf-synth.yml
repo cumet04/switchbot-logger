@@ -1,0 +1,30 @@
+name: PR_cdktfのsynth確認
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # recorderやviewerの変更がある場合もterraform差分は発生するため、pathsをinfraに限定しない
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: 'infra/.node-version'
+      - uses: actions/cache@v3
+        with:
+          path: 'node_modules'
+          key: infra-node_modules-${{ hashFiles('**/package-lock.json') }}
+      - run: npm install
+
+      # synthによりdiffが発生すればexit-codeが1になる
+      - run: npm run synth
+      - run: git diff --exit-code

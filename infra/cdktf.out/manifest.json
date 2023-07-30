@@ -1,0 +1,21 @@
+{
+  "version": "0.15.5",
+  "stacks": {
+    "production": {
+      "name": "production",
+      "constructPath": "production",
+      "workingDirectory": "stacks/production",
+      "synthesizedStackPath": "stacks/production/cdk.tf.json",
+      "annotations": [],
+      "dependencies": []
+    },
+    "development": {
+      "name": "development",
+      "constructPath": "development",
+      "workingDirectory": "stacks/development",
+      "synthesizedStackPath": "stacks/development/cdk.tf.json",
+      "annotations": [],
+      "dependencies": []
+    }
+  }
+}

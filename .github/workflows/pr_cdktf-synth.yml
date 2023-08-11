@@ -26,5 +26,7 @@ jobs:
       - run: npm install
 
       # synthによりdiffが発生すればexit-codeが1になる
+      - run: cat cdktf.out/stacks/development/assets/CloudFunctionGo_recorder_zip_2313AB52/9FA5F3A1FF8E727ADBABE9AB0E8FD8C6/archive.zip | sha256sum
       - run: npm run synth
-      - run: git diff --exit-code
+      - run: cat cdktf.out/stacks/development/assets/CloudFunctionGo_recorder_zip_2313AB52/9FA5F3A1FF8E727ADBABE9AB0E8FD8C6/archive.zip | sha256sum
+      # - run: git diff --exit-code

@@ -4,7 +4,6 @@ import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {ServiceAccount} from './serviceAccount';
 import {BigqueryDataset, BigqueryTable} from './bigquery';
-import {CloudFunctionGo} from './cloudFunctions';
 import {Secret} from './secretManager';
 import {AppContext} from './baseConstruct';
 
@@ -49,63 +48,7 @@ class MyStack extends TerraformStack {
     const token = new Secret(this, 'switchbot_token');
     const secret = new Secret(this, 'switchbot_secret');
 
-    this.setupRecorder(token, secret);
-    this.setupViewer(token, secret);
     this.setupMetricsTable();
-  }
-
-  private setupRecorder(token: Secret, secret: Secret): void {
-    const sa = new ServiceAccount(this, 'recorder', [
-      // TODO: 対象リソース絞れるか？
-      'bigquery.datasets.get',
-      'bigquery.datasets.getIamPolicy',
-      'bigquery.tables.get',
-      'bigquery.tables.updateData',
-      'secretmanager.versions.access',
-    ]);
-
-    const authPath = new Secret(this, 'recorder_auth_path');
-
-    new CloudFunctionGo(this, 'recorder', {
-      sourcePath: path.resolve(__dirname, '../../recorder'),
-      allowUnauthenticated: true,
-      secrets: {
-        AUTH_PATH: authPath.secretId,
-        SWITCHBOT_TOKEN: token.secretId,
-        SWITCHBOT_SECRET: secret.secretId,
-      },
-      serviceConfig: {
-        serviceAccountEmail: sa.account.email,
-        environmentVariables: {
-          PROJECT_ID: this.projectId.value,
-        },
-      },
-    });
-  }
-
-  private setupViewer(token: Secret, secret: Secret): void {
-    const sa = new ServiceAccount(this, 'viewer', [
-      // TODO: 対象リソース絞れるか？
-      'bigquery.jobs.create',
-      'bigquery.tables.getData',
-      'secretmanager.versions.access',
-    ]);
-    const authPath = new Secret(this, 'viewer_auth_path');
-    new CloudFunctionGo(this, 'viewer', {
-      sourcePath: path.resolve(__dirname, '../../viewer'),
-      allowUnauthenticated: true,
-      secrets: {
-        AUTH_PATH: authPath.secretId,
-        SWITCHBOT_TOKEN: token.secretId,
-        SWITCHBOT_SECRET: secret.secretId,
-      },
-      serviceConfig: {
-        serviceAccountEmail: sa.account.email,
-        environmentVariables: {
-          PROJECT_ID: this.projectId.value,
-        },
-      },
-    });
   }
 
   private setupMetricsTable(): void {

@@ -1,5 +1,5 @@
 {
-  "version": "0.15.5",
+  "version": "0.18.0",
   "stacks": {
     "production": {
       "name": "production",

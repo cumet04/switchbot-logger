@@ -10,6 +10,7 @@
     "test": "node --no-warnings --loader tsx --test **/*_test.ts"
   },
   "dependencies": {
+    "@google-cloud/bigquery": "^7.2.0",
     "@types/node": "20.4.9",
     "@types/react": "18.2.20",
     "@types/react-dom": "18.2.7",

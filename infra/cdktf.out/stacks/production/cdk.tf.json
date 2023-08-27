@@ -17,6 +17,19 @@
     ]
   },
   "resource": {
+    "google_artifact_registry_repository": {
+      "CloudRun_app_repository_51D9805D": {
+        "//": {
+          "metadata": {
+            "path": "production/CloudRun_app/repository",
+            "uniqueId": "CloudRun_app_repository_51D9805D"
+          }
+        },
+        "format": "DOCKER",
+        "location": "asia-northeast1",
+        "repository_id": "app"
+      }
+    },
     "google_bigquery_dataset": {
       "BigqueryDataset_switchbot_this_6E5373C6": {
         "//": {
@@ -46,7 +59,155 @@
         }
       }
     },
+    "google_cloud_run_service_iam_binding": {
+      "CloudRun_app_unauth-bind_17FE6E75": {
+        "//": {
+          "metadata": {
+            "path": "production/CloudRun_app/unauth-bind",
+            "uniqueId": "CloudRun_app_unauth-bind_17FE6E75"
+          }
+        },
+        "location": "${google_cloud_run_v2_service.CloudRun_app_service_23028B9E.location}",
+        "members": [
+          "allUsers"
+        ],
+        "role": "roles/run.invoker",
+        "service": "${google_cloud_run_v2_service.CloudRun_app_service_23028B9E.name}"
+      }
+    },
+    "google_cloud_run_v2_service": {
+      "CloudRun_app_service_23028B9E": {
+        "//": {
+          "metadata": {
+            "path": "production/CloudRun_app/service",
+            "uniqueId": "CloudRun_app_service_23028B9E"
+          }
+        },
+        "ingress": "INGRESS_TRAFFIC_ALL",
+        "lifecycle": {
+          "ignore_changes": [
+            "client",
+            "client_version",
+            "labels",
+            "template[0].labels",
+            "template[0].containers[0].image",
+            "template[0].revision"
+          ]
+        },
+        "location": "asia-northeast1",
+        "name": "app",
+        "template": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "AUTH_PATH",
+                  "value_source": {
+                    "secret_key_ref": {
+                      "secret": "${google_secret_manager_secret.Secret_auth_path_this_24024496.secret_id}",
+                      "version": "latest"
+                    }
+                  }
+                },
+                {
+                  "name": "SWITCHBOT_TOKEN",
+                  "value_source": {
+                    "secret_key_ref": {
+                      "secret": "${google_secret_manager_secret.Secret_switchbot_token_this_8375C458.secret_id}",
+                      "version": "latest"
+                    }
+                  }
+                },
+                {
+                  "name": "SWITCHBOT_SECRET",
+                  "value_source": {
+                    "secret_key_ref": {
+                      "secret": "${google_secret_manager_secret.Secret_switchbot_secret_this_B83FAFFD.secret_id}",
+                      "version": "latest"
+                    }
+                  }
+                }
+              ],
+              "image": ""
+            }
+          ],
+          "execution_environment": "EXECUTION_ENVIRONMENT_GEN2",
+          "scaling": {
+            "max_instance_count": 1,
+            "min_instance_count": 0
+          },
+          "service_account": "${google_service_account.ServiceAccount_application_account_10925BC1.email}"
+        }
+      }
+    },
+    "google_cloudbuild_trigger": {
+      "CloudRun_app_trigger_F78D7088": {
+        "//": {
+          "metadata": {
+            "path": "production/CloudRun_app/trigger",
+            "uniqueId": "CloudRun_app_trigger_F78D7088"
+          }
+        },
+        "filename": "app/cloudbuild.yaml",
+        "github": {
+          "name": "switchbot-logger",
+          "owner": "cumet04",
+          "push": {
+            "branch": "^staging$"
+          }
+        },
+        "location": "global",
+        "name": "cloudrun-app",
+        "substitutions": {
+          "_IMAGE_URL": "${google_artifact_registry_repository.CloudRun_app_repository_51D9805D.location}-docker.pkg.dev/${google_artifact_registry_repository.CloudRun_app_repository_51D9805D.project}/${google_artifact_registry_repository.CloudRun_app_repository_51D9805D.repository_id}/main",
+          "_REGION": "asia-northeast1",
+          "_SERVICE_NAME": "app"
+        }
+      }
+    },
+    "google_project_iam_custom_role": {
+      "ServiceAccount_application_role_DE645C1B": {
+        "//": {
+          "metadata": {
+            "path": "production/ServiceAccount_application/role",
+            "uniqueId": "ServiceAccount_application_role_DE645C1B"
+          }
+        },
+        "permissions": [
+          "bigquery.jobs.create",
+          "bigquery.tables.getData",
+          "secretmanager.versions.access"
+        ],
+        "role_id": "application",
+        "title": "application"
+      }
+    },
+    "google_project_iam_member": {
+      "ServiceAccount_application_member_70AA2E05": {
+        "//": {
+          "metadata": {
+            "path": "production/ServiceAccount_application/member",
+            "uniqueId": "ServiceAccount_application_member_70AA2E05"
+          }
+        },
+        "member": "serviceAccount:${google_service_account.ServiceAccount_application_account_10925BC1.email}",
+        "project": "${var.project_id}",
+        "role": "${google_project_iam_custom_role.ServiceAccount_application_role_DE645C1B.name}"
+      }
+    },
     "google_secret_manager_secret": {
+      "Secret_auth_path_this_24024496": {
+        "//": {
+          "metadata": {
+            "path": "production/Secret_auth_path/this",
+            "uniqueId": "Secret_auth_path_this_24024496"
+          }
+        },
+        "replication": {
+          "automatic": true
+        },
+        "secret_id": "auth_path"
+      },
       "Secret_switchbot_secret_this_B83FAFFD": {
         "//": {
           "metadata": {
@@ -70,6 +231,18 @@
           "automatic": true
         },
         "secret_id": "switchbot_token"
+      }
+    },
+    "google_service_account": {
+      "ServiceAccount_application_account_10925BC1": {
+        "//": {
+          "metadata": {
+            "path": "production/ServiceAccount_application/account",
+            "uniqueId": "ServiceAccount_application_account_10925BC1"
+          }
+        },
+        "account_id": "application",
+        "display_name": "application"
       }
     }
   },

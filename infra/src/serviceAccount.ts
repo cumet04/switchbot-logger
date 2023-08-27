@@ -10,13 +10,16 @@ export class ServiceAccount extends BaseConstruct {
   constructor(scope: Construct, name: string, permissions: string[]) {
     super(scope, `ServiceAccount_${name}`);
 
+    // MEMO: ServiceAccountのaccountIdはハイフンが許容、CustomeRoleのroleIdはアンスコが許容のため
+    // nameに区切りを使いたい場合はなんらか工夫が要る
+
     this.account = new gServiceAccount(this, 'account', {
-      accountId: name,
+      accountId: name, // ^[a-z](?:[-a-z0-9]{4,28}[a-z0-9])$ => 5~30文字の小文字とハイフン。先頭と末尾はハイフン非許容
       displayName: name,
     });
 
     const role = new ProjectIamCustomRole(this, 'role', {
-      roleId: name,
+      roleId: name, // ^[a-zA-Z0-9_\\.]{3,64}$ => 3~64文字の英数字とアンダースコアとドット
       title: name,
       permissions,
     });

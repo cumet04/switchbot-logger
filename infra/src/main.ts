@@ -1,4 +1,3 @@
-import * as path from 'path';
 import {Construct} from 'constructs';
 import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
@@ -6,6 +5,7 @@ import {ServiceAccount} from './serviceAccount';
 import {BigqueryDataset, BigqueryTable} from './bigquery';
 import {Secret} from './secretManager';
 import {AppContext} from './baseConstruct';
+import {CloudRun} from './cloudRun';
 
 declare global {
   type EnvType = 'production' | 'development';
@@ -45,10 +45,37 @@ class MyStack extends TerraformStack {
       project: this.projectId.value,
     });
 
-    const token = new Secret(this, 'switchbot_token');
-    const secret = new Secret(this, 'switchbot_secret');
+    this.setupCloudRunApp();
 
     this.setupMetricsTable();
+  }
+
+  private setupCloudRunApp(): void {
+    const token = new Secret(this, 'switchbot_token');
+    const secret = new Secret(this, 'switchbot_secret');
+    const authPath = new Secret(this, 'auth_path');
+
+    const sa = new ServiceAccount(this, 'application', [
+      // TODO: 対象リソース絞れるか？
+      'bigquery.jobs.create',
+      'bigquery.tables.getData',
+      'secretmanager.versions.access',
+    ]);
+
+    new CloudRun(this, 'app', {
+      serviceAccount: sa,
+      secrets: {
+        AUTH_PATH: authPath,
+        SWITCHBOT_TOKEN: token,
+        SWITCHBOT_SECRET: secret,
+      },
+      github: {
+        owner: 'cumet04',
+        name: 'switchbot-logger',
+        push: {branch: '^staging$'},
+      },
+      buildYamlPath: 'app/cloudbuild.yaml',
+    });
   }
 
   private setupMetricsTable(): void {

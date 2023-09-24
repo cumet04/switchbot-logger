@@ -20,8 +20,10 @@ const switchbot = {
   _token: env("switchbotToken"),
   _secret: env("switchbotSecret"),
 
-  async DeviceTypeFor(deviceId: DeviceId): Promise<DeviceType> {
-    const devices = (await this.FetchDevices()).body.deviceList;
+  DeviceTypeFor(deviceId: DeviceId): DeviceType {
+    if (!this._devicesCache) throw new Error("devices cache is not set");
+
+    const devices = this._devicesCache.body.deviceList;
     const device = devices.find((d) => d.deviceId === deviceId);
     if (!device) {
       throw new Error(`device not found: ${deviceId}`);
@@ -29,8 +31,9 @@ const switchbot = {
     return device.deviceType;
   },
 
-  _devicesCache: null as DevicesResponse | null,
-  async FetchDevices(force = false): Promise<DevicesResponse> {
+  // Devices利用メソッドを呼ぶ前にこれを読んでおく。
+  // 利用メソッド内から直接呼ばないようにすることでasync汚染を局所化する。
+  async EnsureDevices(force = false): Promise<DevicesResponse> {
     if (force || !this._devicesCache) {
       const endpoint = "https://api.switch-bot.com/v1.1/devices";
       const resp = await this.switchbotGet(endpoint);
@@ -43,6 +46,7 @@ const switchbot = {
     }
     return this._devicesCache;
   },
+  _devicesCache: null as DevicesResponse | null,
 
   async switchbotGet(url: string) {
     const token = this._token;
@@ -75,5 +79,5 @@ const switchbot = {
 
 export default switchbot as Pick<
   typeof switchbot,
-  "DeviceTypeFor" | "FetchDevices"
+  "DeviceTypeFor" | "EnsureDevices"
 >;

@@ -6,7 +6,7 @@ describe("switchbot", () => {
   // API疎通自体の関数のため、実際のエンドポイントに疎通して確認する。
   // 特に認証ヘッダの生成が正しいかは実際に疎通して確認する必要がある。
   it("FetchDevices", async () => {
-    const actual = await switchbot.FetchDevices();
+    const actual = await switchbot.EnsureDevices();
 
     assert.equal(actual.statusCode, 100);
     assert.ok(actual.body.deviceList.length > 0); // 一個くらいあるやろ

@@ -1,14 +1,21 @@
 import switchbot from "./switchbot";
 
-// SwitchBotデバイスのBluetoothメッセージから読みだせるデータレコード
-type BluetoothSensorRecord = {
-  Time: Date;
-  Address: MacAddress;
-  Type: DeviceType;
-  Value: number;
-};
-
 export function Parse(msg: string): BluetoothSensorRecord[] {
-  console.log(switchbot.DeviceTypeFor(msg as DeviceId)); // TEST
+  console.log(switchbot.DeviceTypeFor(DeviceId(msg))); // TEST
   return [];
 }
+
+// MEMO: 関数内で値のチェックをしてもいいと思う
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+export function MacAddress(addr: string): MacAddress {
+  return addr as MacAddress;
+}
+
+export function DeviceId(addr: string): DeviceId {
+  return addr as DeviceId;
+}
+
+export function TimeStr(time: string): TimeStr {
+  return time as TimeStr;
+}
+/* eslint-enable @typescript-eslint/consistent-type-assertions */

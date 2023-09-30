@@ -52,10 +52,12 @@ const switchbot = {
         throw new Error(`unexpected status code: ${resp.status}`);
       }
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       this._devicesCache = (await resp.json()) as DevicesResponse;
     }
     return this._devicesCache;
   },
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   _devicesCache: null as DevicesResponse | null,
 
   async switchbotGet(url: string) {
@@ -87,7 +89,8 @@ const switchbot = {
   },
 };
 
-export default switchbot as Pick<
+const exportSwitchbot: Pick<
   typeof switchbot,
   "DeviceTypeFor" | "EnsureDevices"
->;
+> = switchbot;
+export default exportSwitchbot;

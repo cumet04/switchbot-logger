@@ -7,7 +7,7 @@ export async function Record(
   data: SensorRecord[]
 ) {
   const bigquery = new BigQuery();
-  bigquery
+  await bigquery
     .dataset(dataset, { projectId })
     .table(table)
     .insert(

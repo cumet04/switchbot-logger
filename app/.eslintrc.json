@@ -1,7 +1,8 @@
 {
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/strict-type-checked",
+    "plugin:@typescript-eslint/stylistic-type-checked",
     "next/core-web-vitals",
     "prettier"
   ],
@@ -9,7 +10,11 @@
     "project": "./tsconfig.json"
   },
   "rules": {
-    "@typescript-eslint/no-floating-promises": "warn"
+    "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+    "@typescript-eslint/consistent-type-assertions": [
+      "warn",
+      { "assertionStyle": "never" }
+    ]
   },
   "overrides": [
     {
@@ -17,9 +22,7 @@
       "rules": {
         // 標準のdescribeやitがPromiseを返して誤爆するのを無効化
         // refs https://github.com/typescript-eslint/typescript-eslint/issues/5231
-        "@typescript-eslint/no-floating-promises": {
-          "ignoreVoid": true
-        }
+        "@typescript-eslint/no-floating-promises": "off"
       }
     }
   ]

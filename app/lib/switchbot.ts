@@ -52,6 +52,7 @@ const switchbot = {
         throw new Error(`unexpected status code: ${resp.status}`);
       }
 
+      // TODO: DeviceTypesにないものが渡ってきた場合に、warnログを履きつつ無視するようにする
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       this._devicesCache = (await resp.json()) as DevicesResponse;
     }
@@ -88,6 +89,16 @@ const switchbot = {
     });
   },
 };
+
+// テスト用にダミーのデバイスリストをセット
+export function SetDummyDevicesCache(devices: Device[]) {
+  switchbot._devicesCache = {
+    statusCode: 200,
+    body: {
+      deviceList: devices,
+    },
+  };
+}
 
 const exportSwitchbot: Pick<
   typeof switchbot,

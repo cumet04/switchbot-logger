@@ -1,5 +1,3 @@
-import assert from "node:assert";
-import { it, describe } from "node:test";
 import { SetDummyDevicesCache } from "./switchbot";
 import { MacAddress, MacToId, Parse, TimeStr } from "./parser";
 
@@ -50,8 +48,8 @@ describe("parse", () => {
         ],
       };
       Parse(JSON.stringify(input1)).forEach((r) => {
-        assert.equal(r.Time, time1);
-        assert.equal(r.Address, addr1);
+        expect(r.Time).toBe(time1);
+        expect(r.Address).toBe(addr1);
       });
 
       const time2 = "2023-09-30T13:05:48.027472+00:00";
@@ -69,15 +67,14 @@ describe("parse", () => {
         ],
       };
       Parse(JSON.stringify(input2)).forEach((r) => {
-        assert.equal(r.Time, time2);
-        assert.equal(r.Address, addr2);
+        expect(r.Time).toBe(time2);
+        expect(r.Address).toBe(addr2);
       });
     });
 
     it("不正なJSONデータを入力した場合、JSONパースエラーになる", () => {
       const input = "xxx";
-      assert.throws(
-        () => Parse(input),
+      expect(() => Parse(input)).toThrowError(
         /Unexpected token .* in JSON at position/
       );
     });
@@ -91,7 +88,7 @@ describe("parse", () => {
         ],
       };
       const actual = Parse(JSON.stringify(input));
-      assert.equal(actual, []);
+      expect(actual).toEqual([]);
     });
   });
 });
@@ -104,7 +101,7 @@ describe("センサー種類ごと", () => {
   ) => {
     const Time = TimeStr("2022-08-29T14:35:36.033219+00:00");
     const inputJson = `{"time": "${Time}", "addr": "${addr}", "structs": [${input}]}`;
-    assert.deepStrictEqual(Parse(inputJson), {
+    expect(Parse(inputJson)).toEqual({
       Time,
       Address: addr,
       ...want,

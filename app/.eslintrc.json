@@ -15,15 +15,5 @@
       "warn",
       { "assertionStyle": "never" }
     ]
-  },
-  "overrides": [
-    {
-      "files": "*_test.ts",
-      "rules": {
-        // 標準のdescribeやitがPromiseを返して誤爆するのを無効化
-        // refs https://github.com/typescript-eslint/typescript-eslint/issues/5231
-        "@typescript-eslint/no-floating-promises": "off"
-      }
-    }
-  ]
+  }
 }

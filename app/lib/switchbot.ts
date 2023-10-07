@@ -8,6 +8,7 @@ export const DeviceTypes = [
   "Meter",
   "WoIOSensor",
   "Ceiling Light",
+  "Hub Mini",
 ] as const;
 type DeviceType = (typeof DeviceTypes)[number];
 
@@ -30,14 +31,13 @@ const switchbot = {
   _token: env("switchbotToken"),
   _secret: env("switchbotSecret"),
 
-  DeviceTypeFor(deviceId: DeviceId): DeviceType {
+  DeviceTypeFor(deviceId: DeviceId): DeviceType | null {
     if (!this._devicesCache) throw new Error("devices cache is not set");
 
     const devices = this._devicesCache.body.deviceList;
     const device = devices.find((d) => d.deviceId === deviceId);
-    if (!device) {
-      throw new Error(`device not found: ${deviceId}`);
-    }
+    if (!device) return null;
+
     return device.deviceType;
   },
 

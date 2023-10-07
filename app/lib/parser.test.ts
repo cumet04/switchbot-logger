@@ -82,7 +82,7 @@ describe("parse", () => {
     it("登録されていないMACアドレスを入力した場合、空配列が返る", () => {
       const input = {
         time: "2023-09-27T07:38:44.951123+00:00",
-        addr: "xx:xx:xx:xx:xx:xx",
+        addr: "ac:de:48:ff:ff:ff",
         structs: [
           { adtype: 22, desc: "16b Service Data", value: "000d540064009b4c" },
         ],
@@ -101,11 +101,13 @@ describe("センサー種類ごと", () => {
   ) => {
     const Time = TimeStr("2022-08-29T14:35:36.033219+00:00");
     const inputJson = `{"time": "${Time}", "addr": "${addr}", "structs": [${input}]}`;
-    expect(Parse(inputJson)).toEqual({
-      Time,
-      Address: addr,
-      ...want,
-    });
+    expect(Parse(inputJson)).toEqual(
+      want.map((w) => ({
+        Time,
+        Address: addr,
+        ...w,
+      }))
+    );
   };
 
   describe("Meter Data", () => {
@@ -123,10 +125,10 @@ describe("センサー種類ごと", () => {
     it("気温が氷点下の場合", () => {
       parseMatch(
         meterMac,
-        '{"adtype": 22, "desc": "16b Service Data", "value": "000d540064001b4c"}',
+        '{"adtype": 22, "desc": "16b Service Data", "value": "000d540064051b4c"}',
         [
           { Type: "Battery", Value: 100 },
-          { Type: "Temperature", Value: -27.0 },
+          { Type: "Temperature", Value: -27.5 },
           { Type: "Humidity", Value: 76 },
         ]
       );

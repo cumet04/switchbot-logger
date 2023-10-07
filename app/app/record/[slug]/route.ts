@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { slug: string } }
 ) {
   const auth = params.slug;
-  if (auth !== "hoge")
+  if (auth !== env("authPath"))
     return NextResponse.json({ error: "invalid auth" }, { status: 401 });
 
   const input = await request.text();

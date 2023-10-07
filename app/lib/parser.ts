@@ -100,53 +100,65 @@ function parseMeterData(s: AdStructure): BluetoothSensorRecord[] {
 }
 function parseWoIOSensorData(s: AdStructure): BluetoothSensorRecord[] {
   // 公式仕様書に記載がないので、個人ブログを参照 https://tsuzureya.net/?p=812
-  // if s.AdType != 255 { // Manufacturer
-  // 	return nil, nil
-  // }
-  // // 参考ブログのコメント欄より、ServiceDataにバッテリ残量がありそうなことが書かれているが
-  // // バッテリ残量が減らなすぎて検証できない。バッテリが減りそうになったらまた考える
-  // bytes, err := hex.DecodeString(s.Data)
-  // if err != nil {
-  // 	return nil, err
-  // }
-  // tempIsNegative := bytes[11]&0b10000000 == 0
-  // tempInt := int(bytes[11] & 0b01111111)
-  // tempReal := float32(bytes[10]&0b00001111) / 10
-  // temperature := float32(tempInt) + tempReal
-  // if tempIsNegative {
-  // 	temperature = -temperature
-  // }
-  // humidity := float32(bytes[12] & 0b01111111)
-  // return []Record{
-  // 	{s.Time, s.DeviceAddress, RecordTypes.Temperature, temperature},
-  // 	{s.Time, s.DeviceAddress, RecordTypes.Humidity, humidity},
-  // }, nil
+
+  // 主なデータは Manufacturer(255)にあるので、それ以外は無視。
+  // 参考ブログのコメント欄より、ServiceData(22)にバッテリ残量がありそうなことが書かれているが
+  // バッテリ残量が減らなすぎて検証できない。バッテリが減りそうになったらまた考える
+  if (s.AdType !== 255) return [];
+
+  const bytes = Buffer.from(s.Data, "hex");
+
+  const tempIsNegative = !(bytes[11] & 0b10000000);
+  const tempInt = bytes[11] & 0b01111111;
+  const tempReal = (bytes[10] & 0b00001111) / 10;
+  const temperature = tempInt + tempReal;
+
+  const humidity = bytes[12] & 0b01111111;
+
+  return [
+    {
+      Time: s.Time,
+      Address: s.DeviceAddress,
+      Type: "Temperature",
+      Value: tempIsNegative ? -temperature : temperature,
+    },
+    {
+      Time: s.Time,
+      Address: s.DeviceAddress,
+      Type: "Humidity",
+      Value: humidity,
+    },
+  ];
+
   return [];
 }
 function parsePlugData(s: AdStructure): BluetoothSensorRecord[] {
   // プラグミニのパケットの仕様: https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/plugmini.md
-  // プラグミニのデータはManufacturer (AdType 255)に入っているので、それ以外は無視
-  // if s.AdType != 255 {
-  // 	return nil, nil
-  // }
-  // bytes, err := hex.DecodeString(s.Data)
-  // if err != nil {
-  // 	return nil, err
-  // }
-  // var poweron int
-  // if bytes[9] == 0x80 {
-  // 	poweron = 1
-  // } else {
-  // 	poweron = 0
-  // }
-  // loadMSB := int(bytes[12] & 0b01111111)
-  // loadLSB := int(bytes[13])
-  // load := float32(loadMSB*0xff+loadLSB) / 10
-  // return []Record{
-  // 	{s.Time, s.DeviceAddress, RecordTypes.PowerOn, float32(poweron)},
-  // 	{s.Time, s.DeviceAddress, RecordTypes.Load, load},
-  // }, nil
-  return [];
+
+  if (s.AdType !== 255) return []; // プラグミニのデータはManufacturer(255)に入っているので、それ以外は無視
+
+  const bytes = Buffer.from(s.Data, "hex");
+
+  const powerOn = bytes[9] === 0x80 ? 1 : 0;
+
+  const loadMSB = bytes[12] & 0b01111111;
+  const loadLSB = bytes[13];
+  const load = (loadMSB * 0xff + loadLSB) / 10;
+
+  return [
+    {
+      Time: s.Time,
+      Address: s.DeviceAddress,
+      Type: "PowerOn",
+      Value: powerOn,
+    },
+    {
+      Time: s.Time,
+      Address: s.DeviceAddress,
+      Type: "Load",
+      Value: load,
+    },
+  ];
 }
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */

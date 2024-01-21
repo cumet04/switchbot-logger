@@ -19,7 +19,10 @@ export async function POST(
   await switchbot.EnsureDevices();
   // MEMO: Parseの中でJSON.parseしたり型確認したりしており、入力値不正のハンドリングの意味で不適切。
   // Bad Requestを先に返せるようにする意味でも、JSON.parseと型チェックは切り出したほうがよい
-  const btRecords = input.split("\n").flatMap((msg) => Parse(msg));
+  const btRecords = input
+    .split("\n")
+    .filter((s) => s.length > 0)
+    .flatMap((msg) => Parse(msg));
 
   const records = btRecords.map((r) => ({
     Time: r.Time,

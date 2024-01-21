@@ -57,8 +57,11 @@ class MyStack extends TerraformStack {
 
     const sa = new ServiceAccount(this, 'application', [
       // TODO: 対象リソース絞れるか？
+      'bigquery.datasets.get',
       'bigquery.jobs.create',
+      'bigquery.tables.get',
       'bigquery.tables.getData',
+      'bigquery.tables.updateData',
       'secretmanager.versions.access',
     ]);
 

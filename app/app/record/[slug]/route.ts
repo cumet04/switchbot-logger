@@ -1,7 +1,10 @@
 import { Record } from "@/lib/bigquery";
 import { env } from "@/lib/envvars";
 import { Parse } from "@/lib/parser";
+import switchbot from "@/lib/switchbot";
 import { NextResponse } from "next/server";
+
+// TODO: sourcemapだせない？
 
 export async function POST(
   request: Request,
@@ -13,6 +16,9 @@ export async function POST(
 
   const input = await request.text();
 
+  await switchbot.EnsureDevices();
+  // MEMO: Parseの中でJSON.parseしたり型確認したりしており、入力値不正のハンドリングの意味で不適切。
+  // Bad Requestを先に返せるようにする意味でも、JSON.parseと型チェックは切り出したほうがよい
   const btRecords = input.split("\n").flatMap((msg) => Parse(msg));
 
   const records = btRecords.map((r) => ({

@@ -178,8 +178,11 @@
           }
         },
         "permissions": [
+          "bigquery.datasets.get",
           "bigquery.jobs.create",
+          "bigquery.tables.get",
           "bigquery.tables.getData",
+          "bigquery.tables.updateData",
           "secretmanager.versions.access"
         ],
         "role_id": "application",

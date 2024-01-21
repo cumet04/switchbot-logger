@@ -101,6 +101,10 @@
             {
               "env": [
                 {
+                  "name": "PROJECT_ID",
+                  "value": "${var.project_id}"
+                },
+                {
                   "name": "AUTH_PATH",
                   "value_source": {
                     "secret_key_ref": {

@@ -19,6 +19,7 @@ export class CloudRun extends BaseConstruct {
     name: string,
     options: {
       serviceAccount: ServiceAccount;
+      envvars?: Record<string, string>;
       secrets?: Record<string, Secret>;
       github: CloudbuildTriggerGithub;
       buildYamlPath: string;
@@ -44,6 +45,21 @@ export class CloudRun extends BaseConstruct {
       },
     });
 
+    const normalENvs = Object.entries(options.envvars ?? {}).map(
+      ([key, value]): CloudRunV2ServiceTemplateContainersEnv => ({
+        name: key,
+        value,
+      })
+    );
+    const secretEnvs = Object.entries(options.secrets ?? {}).map(
+      ([key, secret]): CloudRunV2ServiceTemplateContainersEnv => ({
+        name: key,
+        valueSource: {
+          secretKeyRef: {secret: secret.secretId, version: 'latest'},
+        },
+      })
+    );
+
     const service = new CloudRunV2Service(this, 'service', {
       name,
       location: this.gcpLocation,
@@ -55,14 +71,7 @@ export class CloudRun extends BaseConstruct {
             // imageはterraformでは管理しない
             // 初期構築時は、先にtriggerとrepositoryを作ってビルドを行い、できたimageを指定する
             image: '',
-            env: Object.entries(options.secrets ?? {}).map(
-              ([key, secret]): CloudRunV2ServiceTemplateContainersEnv => ({
-                name: key,
-                valueSource: {
-                  secretKeyRef: {secret: secret.secretId, version: 'latest'},
-                },
-              })
-            ),
+            env: normalENvs.concat(secretEnvs),
           },
         ],
         scaling: {

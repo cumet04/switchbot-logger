@@ -64,6 +64,9 @@ class MyStack extends TerraformStack {
 
     new CloudRun(this, 'app', {
       serviceAccount: sa,
+      envvars: {
+        PROJECT_ID: this.projectId.value,
+      },
       secrets: {
         AUTH_PATH: authPath,
         SWITCHBOT_TOKEN: token,

@@ -27,10 +27,6 @@ type DevicesResponse = {
 };
 
 const switchbot = {
-  // 利用側でSetCredentialsみたいな感じで入れてもよいが、ひとまずload時点で環境変数を読むようにしておく
-  _token: env("switchbotToken"),
-  _secret: env("switchbotSecret"),
-
   DeviceTypeFor(deviceId: DeviceId): DeviceType | null {
     if (!this._devicesCache) throw new Error("devices cache is not set");
 
@@ -62,8 +58,8 @@ const switchbot = {
   _devicesCache: null as DevicesResponse | null,
 
   async switchbotGet(url: string) {
-    const token = this._token;
-    const secret = this._secret;
+    const token = env("SWITCHBOT_TOKEN");
+    const secret = env("SWITCHBOT_SECRET");
     if (!token || !secret) throw new Error("token or secret is not set");
 
     // https://github.com/OpenWonderLabs/SwitchBotAPI/blob/21f905ba96147028d85517b517beef3a2d66bb50/README.md#authentication

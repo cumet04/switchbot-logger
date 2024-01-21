@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { slug: string } }
 ) {
   const auth = params.slug;
-  if (auth !== env("authPath"))
+  if (auth !== env("AUTH_PATH"))
     return NextResponse.json({ error: "invalid auth" }, { status: 401 });
 
   const input = await request.text();
@@ -22,7 +22,7 @@ export async function POST(
     Value: r.Value,
   }));
 
-  await Record(env("projectId"), "switchbot", "metrics", records);
+  await Record(env("PROJECT_ID"), "switchbot", "metrics", records);
 
   return NextResponse.json({ message: "ok" });
 }

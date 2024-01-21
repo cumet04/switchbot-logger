@@ -5,7 +5,7 @@ import { env } from "./envvars";
 describe.skip("bigquery", () => {
   // BigQueryエミュレータを用意するのは面倒なので、devの実環境にinsertして結果を目視するかたちで検証する
   it("Record", async () => {
-    const project = env("projectId");
+    const project = env("PROJECT_ID");
     const actual = async () => {
       await Record(project, "switchbot", "metrics", [
         {

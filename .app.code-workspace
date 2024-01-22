@@ -4,6 +4,9 @@
       "path": "."
     },
     {
+      "path": "./app"
+    },
+    {
       "path": "./recorder"
     },
     {
@@ -19,14 +22,5 @@
       "path": "./infra"
     },
   ],
-  "settings": {
-    "files.exclude": {
-      // hide first-level folders from root
-      "recorder": true,
-      "raspi": true,
-      "switchbot": true,
-      "viewer": true,
-      "infra": true,
-    }
-  }
+  "settings": {},
 }

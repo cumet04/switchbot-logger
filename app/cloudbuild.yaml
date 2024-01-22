@@ -1,0 +1,17 @@
+steps:
+  - id: Build
+    name: "gcr.io/kaniko-project/executor:latest"
+    args:
+      - --destination=$_IMAGE_URL:$COMMIT_SHA
+      - "--cache=true"
+      - "--context=dir://app"
+  - id: Deploy
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - --image=$_IMAGE_URL:$COMMIT_SHA
+      - --region=$_REGION
+    entrypoint: gcloud

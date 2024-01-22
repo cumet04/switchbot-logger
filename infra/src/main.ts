@@ -1,12 +1,11 @@
-import * as path from 'path';
 import {Construct} from 'constructs';
 import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {ServiceAccount} from './serviceAccount';
 import {BigqueryDataset, BigqueryTable} from './bigquery';
-import {CloudFunctionGo} from './cloudFunctions';
 import {Secret} from './secretManager';
 import {AppContext} from './baseConstruct';
+import {CloudRun} from './cloudRun';
 
 declare global {
   type EnvType = 'production' | 'development';
@@ -46,65 +45,42 @@ class MyStack extends TerraformStack {
       project: this.projectId.value,
     });
 
-    const token = new Secret(this, 'switchbot_token');
-    const secret = new Secret(this, 'switchbot_secret');
+    this.setupCloudRunApp(env);
 
-    this.setupRecorder(token, secret);
-    this.setupViewer(token, secret);
     this.setupMetricsTable();
   }
 
-  private setupRecorder(token: Secret, secret: Secret): void {
-    const sa = new ServiceAccount(this, 'recorder', [
+  private setupCloudRunApp(env: EnvType): void {
+    const token = new Secret(this, 'switchbot_token');
+    const secret = new Secret(this, 'switchbot_secret');
+    const authPath = new Secret(this, 'auth_path');
+
+    const sa = new ServiceAccount(this, 'application', [
       // TODO: 対象リソース絞れるか？
       'bigquery.datasets.get',
-      'bigquery.datasets.getIamPolicy',
+      'bigquery.jobs.create',
       'bigquery.tables.get',
+      'bigquery.tables.getData',
       'bigquery.tables.updateData',
       'secretmanager.versions.access',
     ]);
 
-    const authPath = new Secret(this, 'recorder_auth_path');
-
-    new CloudFunctionGo(this, 'recorder', {
-      sourcePath: path.resolve(__dirname, '../../recorder'),
-      allowUnauthenticated: true,
+    new CloudRun(this, 'app', {
+      serviceAccount: sa,
+      envvars: {
+        PROJECT_ID: this.projectId.value,
+      },
       secrets: {
-        AUTH_PATH: authPath.secretId,
-        SWITCHBOT_TOKEN: token.secretId,
-        SWITCHBOT_SECRET: secret.secretId,
+        AUTH_PATH: authPath,
+        SWITCHBOT_TOKEN: token,
+        SWITCHBOT_SECRET: secret,
       },
-      serviceConfig: {
-        serviceAccountEmail: sa.account.email,
-        environmentVariables: {
-          PROJECT_ID: this.projectId.value,
-        },
+      github: {
+        owner: 'cumet04',
+        name: 'switchbot-logger',
+        push: {branch: `^${env}$`},
       },
-    });
-  }
-
-  private setupViewer(token: Secret, secret: Secret): void {
-    const sa = new ServiceAccount(this, 'viewer', [
-      // TODO: 対象リソース絞れるか？
-      'bigquery.jobs.create',
-      'bigquery.tables.getData',
-      'secretmanager.versions.access',
-    ]);
-    const authPath = new Secret(this, 'viewer_auth_path');
-    new CloudFunctionGo(this, 'viewer', {
-      sourcePath: path.resolve(__dirname, '../../viewer'),
-      allowUnauthenticated: true,
-      secrets: {
-        AUTH_PATH: authPath.secretId,
-        SWITCHBOT_TOKEN: token.secretId,
-        SWITCHBOT_SECRET: secret.secretId,
-      },
-      serviceConfig: {
-        serviceAccountEmail: sa.account.email,
-        environmentVariables: {
-          PROJECT_ID: this.projectId.value,
-        },
-      },
+      buildYamlPath: 'app/cloudbuild.yaml',
     });
   }
 

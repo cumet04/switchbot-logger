@@ -45,12 +45,12 @@ class MyStack extends TerraformStack {
       project: this.projectId.value,
     });
 
-    this.setupCloudRunApp();
+    this.setupCloudRunApp(env);
 
     this.setupMetricsTable();
   }
 
-  private setupCloudRunApp(): void {
+  private setupCloudRunApp(env: EnvType): void {
     const token = new Secret(this, 'switchbot_token');
     const secret = new Secret(this, 'switchbot_secret');
     const authPath = new Secret(this, 'auth_path');
@@ -78,7 +78,7 @@ class MyStack extends TerraformStack {
       github: {
         owner: 'cumet04',
         name: 'switchbot-logger',
-        push: {branch: '^staging$'},
+        push: {branch: `^${env}$`},
       },
       buildYamlPath: 'app/cloudbuild.yaml',
     });

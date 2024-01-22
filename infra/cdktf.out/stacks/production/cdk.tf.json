@@ -157,7 +157,7 @@
           "name": "switchbot-logger",
           "owner": "cumet04",
           "push": {
-            "branch": "^staging$"
+            "branch": "^production$"
           }
         },
         "location": "global",

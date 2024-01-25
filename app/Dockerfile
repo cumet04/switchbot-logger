@@ -1,4 +1,4 @@
-FROM node:18.17.1-slim AS base
+FROM node:20.11.0-slim AS base
 
 # ----
 

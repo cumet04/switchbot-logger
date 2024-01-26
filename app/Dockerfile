@@ -29,8 +29,4 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY docker-entrypoint.sh ./
 
-EXPOSE 3000
-ENV PORT 3000
-ENV HOSTNAME localhost
-
 CMD ["./docker-entrypoint.sh"]

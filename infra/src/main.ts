@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {App, RemoteBackend, TerraformStack, TerraformVariable} from 'cdktf';
+import {App, GcsBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {ServiceAccount} from './serviceAccount';
 import {BigqueryDataset, BigqueryTable} from './bigquery';
@@ -25,21 +25,12 @@ class MyStack extends TerraformStack {
     this.projectId = new TerraformVariable(this, 'project_id', {
       type: 'string',
     });
-    const tfOrganization = new TerraformVariable(this, 'tf_organization', {
-      type: 'string',
-    });
 
     context.env = env;
     context.gcpProjectId = this.projectId;
     context.gcpLocation = 'asia-northeast1';
 
-    new RemoteBackend(this, {
-      hostname: 'app.terraform.io',
-      organization: tfOrganization.value,
-      workspaces: {
-        name: `switchbot-logger_${env}`,
-      },
-    });
+    new GcsBackend(this, {bucket: `switchbot-logger_tfstate_${env}`});
 
     new GoogleProvider(this, 'gcp', {
       project: this.projectId.value,
@@ -78,7 +69,9 @@ class MyStack extends TerraformStack {
       github: {
         owner: 'cumet04',
         name: 'switchbot-logger',
-        push: {branch: `^${env}$`},
+        push: {
+          branch: env === 'production' ? '^main$' : `^${env}$`,
+        },
       },
       buildYamlPath: 'app/cloudbuild.yaml',
     });

@@ -1,2 +1,7 @@
 node_modules
-cdktf.out/**/.terraform
+
+cdktf.out/manifest.json
+cdktf.out/stacks/*/.terraform
+cdktf.out/stacks/*/.terraform.lock.hcl
+cdktf.out/stacks/*/cdk.tf.json
+cdktf.out/stacks/*/plan

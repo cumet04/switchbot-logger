@@ -74,8 +74,8 @@ describe("parse", () => {
 
     it("不正なJSONデータを入力した場合、JSONパースエラーになる", () => {
       const input = "xxx";
-      expect(() => Parse(input)).toThrowError(
-        /Unexpected token .* in JSON at position/
+      expect(() => Parse(input)).toThrow(
+        /Unexpected token .*, .* is not valid JSON/
       );
     });
 

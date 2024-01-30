@@ -5,6 +5,7 @@ import switchbot from "@/lib/switchbot";
 import { NextResponse } from "next/server";
 
 // TODO: sourcemapだせない？
+// TODO: 投げられたエラーオブジェクトのネスト深い場合に中身が展開されず、何もわからない。カスタムロギングを入れないといけないかも
 
 export async function POST(
   request: Request,

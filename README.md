@@ -7,9 +7,11 @@ SwitchBotのプラグや温湿度計の計測データを取得・蓄積する�
 * Raspberry Pi (as bluetooth hardware)
   - bluepyでAdvertisement (生データ) を読み取り、定期的にrecorderにデータを渡す
   - raspiディレクトリ以下
-* recorder (Cloud Function)
-  - Advertisementを入力として受け取り、SwitchBotのセンサデータとしてパースし、BigQueryに貯める
-  - recorderディレクトリ以下
+* app (Next.js/CloudRun)
+  - recorder
+    - Advertisementを入力として受け取り、SwitchBotのセンサデータとしてパースし、BigQueryに貯める
+  - viewer
+    - xxx
 
 Raspi上のコードや設定はごく最低限にし、デプロイやメンテの頻度を下げる。
 
@@ -20,7 +22,8 @@ Raspi上のコードや設定はごく最低限にし、デプロイやメンテ
 * GCPプロジェクトは適宜セットアップ。APIも適宜有効化
 * infra配下で`npm run apply development (or production)`
   - 初期セットアップ時は多分コケる。SecretManagerで各種値を埋めてやり直す
-* recorder/viewerはそれぞれ上記applyでデプロイ
+
+TODO: 記載
 
 ### Raspberry Pi
 ※Raspberry OS Lite 64bit (bullseye)で確認

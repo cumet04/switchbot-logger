@@ -1,11 +1,11 @@
 import { Record } from "./bigquery";
 import { MacAddress, TimeStr } from "./parser";
-import { env } from "./envvars";
 
+// BigQueryエミュレータを用意するのは面倒なので、devの実環境にinsertして結果を目視するかたちで検証する。
+// 検証時は、describeのskipを外し、projectを設定し、GOOGLE_APPLICATION_CREDENTIALS環境変数でサービスアカウントのjsonのパスを渡す。
 describe.skip("bigquery", () => {
-  // BigQueryエミュレータを用意するのは面倒なので、devの実環境にinsertして結果を目視するかたちで検証する
   it("Record", async () => {
-    const project = env("PROJECT_ID");
+    const project = "xxx";
     const actual = async () => {
       await Record(project, "switchbot", "metrics", [
         {

@@ -78,7 +78,9 @@ class MyStack extends TerraformStack {
       github: {
         owner: 'cumet04',
         name: 'switchbot-logger',
-        push: {branch: `^${env}$`},
+        push: {
+          branch: env === 'production' ? '^main$' : `^${env}$`,
+        },
       },
       buildYamlPath: 'app/cloudbuild.yaml',
     });

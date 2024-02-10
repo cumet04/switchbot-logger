@@ -7,9 +7,6 @@
       "path": "./app"
     },
     {
-      "path": "./recorder"
-    },
-    {
       "path": "./raspi"
     },
     {

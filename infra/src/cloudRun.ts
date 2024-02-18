@@ -87,7 +87,6 @@ export class CloudRun extends BaseConstruct {
           'client',
           'client_version',
           'labels',
-          'template[0].labels',
           'template[0].containers[0].image',
           'template[0].containers[0].name', // 手動で再デプロイした場合など、nameが適当に変わってしまうので無視する
           // revisionに関するもろもろの挙動の仕様上、CloudRun v2は真っ当な手段でterraform管理できないようだ。

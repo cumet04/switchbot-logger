@@ -10,7 +10,7 @@ export class Secret extends BaseConstruct {
     const secret = new SecretManagerSecret(this, 'this', {
       secretId: name,
       replication: {
-        automatic: true,
+        auto: {},
       },
     });
     this.secretId = secret.secretId;

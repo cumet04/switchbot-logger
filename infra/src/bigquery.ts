@@ -5,6 +5,7 @@ import {
   BigqueryTableConfig,
   BigqueryTable as gBigqueryTable,
 } from '@cdktf/provider-google/lib/bigquery-table';
+import {BigqueryDataTransferConfig} from '@cdktf/provider-google/lib/bigquery-data-transfer-config';
 
 export class BigqueryTable extends BaseConstruct {
   constructor(
@@ -32,6 +33,33 @@ export class BigqueryDataset extends BaseConstruct {
     new gBigqueryDataset(this, 'this', {
       datasetId,
       location: this.gcpLocation,
+    });
+  }
+}
+
+export class ScheduledQuery extends BaseConstruct {
+  constructor(
+    scope: Construct,
+    config: {
+      displayName: string;
+      schedule: string;
+      query: string;
+      email: boolean;
+    }
+  ) {
+    const {displayName, schedule, query, email} = config;
+
+    super(scope, `ScheduledQuery_${displayName}`);
+
+    new BigqueryDataTransferConfig(this, 'this', {
+      displayName,
+      dataSourceId: 'scheduled_query',
+      location: this.gcpLocation,
+      schedule,
+      emailPreferences: {
+        enableFailureEmail: email,
+      },
+      params: {query},
     });
   }
 }

@@ -5,6 +5,7 @@ export type AppContext = {
   env: EnvType;
   gcpProjectId: TerraformVariable;
   gcpLocation: string;
+  gcpBillingAccount: string;
 };
 
 export class BaseConstruct extends Construct {
@@ -22,6 +23,10 @@ export class BaseConstruct extends Construct {
 
   get gcpLocation() {
     return this.appContext.gcpLocation;
+  }
+
+  get gcpBillingAccount() {
+    return this.appContext.gcpBillingAccount;
   }
 
   private get appContext(): AppContext {

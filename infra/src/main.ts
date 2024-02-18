@@ -24,6 +24,10 @@ class MyStack extends TerraformStack {
 
     this.projectId = new TerraformVariable(this, 'project_id', {
       type: 'string',
+      default: {
+        development: process.env.PROJECT_ID_DEVELOPMENT,
+        production: process.env.PROJECT_ID_PRODUCTION,
+      }[env],
     });
 
     context.env = env;

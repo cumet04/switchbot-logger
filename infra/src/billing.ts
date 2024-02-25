@@ -21,8 +21,9 @@ export class BillingBudget extends BaseConstruct {
       rules: ThresholdRule[];
     }
   ) {
+    super(scope, 'BillingBudget'); // こうすると複数のBudgetを扱えないが、普通は複数作らないので問題ないはず
+
     const {name, targetProjectId, baseAmount, rules} = config;
-    super(scope, `BillingBudget_${name}`);
 
     new gBillingBudget(this, 'this', {
       billingAccount: this.gcpBillingAccount,

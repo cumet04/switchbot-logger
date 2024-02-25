@@ -15,3 +15,7 @@ steps:
       - --image=$_IMAGE_URL:$COMMIT_SHA
       - --region=$_REGION
     entrypoint: gcloud
+options:
+  # TODO: GCSではなくcloud loggingにしているが、それでよいのかは検討していない
+  # service accountを指定すると明示的に指定しないといけないため指定しているだけ
+  logging: CLOUD_LOGGING_ONLY

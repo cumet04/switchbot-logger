@@ -6,6 +6,9 @@ FROM base AS builder
 
 WORKDIR /app
 
+# sentryのrelease APIを実行するために必要
+RUN apt-get update && apt-get install -y ca-certificates
+
 COPY package.json package-lock.json ./
 RUN npm ci
 

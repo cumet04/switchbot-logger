@@ -76,6 +76,7 @@ class MyStack extends TerraformStack {
 
     new CloudRun(this, 'app', {
       serviceAccount: sa,
+      buildPermissions: ['secretmanager.versions.access'],
       envvars: {
         PROJECT_ID: this.projectId.value,
       },

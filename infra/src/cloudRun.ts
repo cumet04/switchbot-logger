@@ -19,6 +19,7 @@ export class CloudRun extends BaseConstruct {
     name: string,
     options: {
       serviceAccount: ServiceAccount;
+      buildPermissions?: string[];
       envvars?: Record<string, string>;
       secrets?: Record<string, Secret>;
       github: CloudbuildTriggerGithub;
@@ -33,11 +34,10 @@ export class CloudRun extends BaseConstruct {
       location: this.gcpLocation,
     });
 
-    const buildAccount = new ServiceAccount(
-      this,
-      'builder',
-      this.CloudBuildServiceAccountPermissions()
-    );
+    const buildAccount = new ServiceAccount(this, 'builder', [
+      ...this.CloudBuildServiceAccountPermissions(),
+      ...(options.buildPermissions ?? []),
+    ]);
 
     new CloudbuildTrigger(this, 'trigger', {
       name: `cloudrun-${name}`,

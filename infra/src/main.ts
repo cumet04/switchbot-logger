@@ -79,6 +79,7 @@ class MyStack extends TerraformStack {
       buildPermissions: ['secretmanager.versions.access'],
       envvars: {
         PROJECT_ID: this.projectId.value,
+        NEXT_PUBLIC_APP_ENV: env,
       },
       secrets: {
         AUTH_PATH: authPath,

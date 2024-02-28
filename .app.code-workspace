@@ -19,5 +19,14 @@
       "path": "./infra"
     },
   ],
-  "settings": {},
+  "settings": {
+    "extensions.ignoreRecommendations": true,
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "hashicorp.terraform"
+    ],
+  },
 }

@@ -65,7 +65,6 @@ class MyStack extends TerraformStack {
     const sentryToken = new Secret(this, 'sentry_token');
 
     const sa = new ServiceAccount(this, 'application', [
-      // TODO: 対象リソース絞れるか？
       'bigquery.datasets.get',
       'bigquery.jobs.create',
       'bigquery.tables.get',

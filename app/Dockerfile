@@ -5,12 +5,16 @@ FROM node:20.11.0-slim AS base
 FROM base AS builder
 
 WORKDIR /app
+ARG SENTRY_AUTH_TOKEN
+
+# sentryのrelease APIを実行するために必要
+RUN apt-get update && apt-get install -y ca-certificates
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN env SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN npm run build
 
 # ----
 

@@ -62,6 +62,7 @@ class MyStack extends TerraformStack {
     const token = new Secret(this, 'switchbot_token');
     const secret = new Secret(this, 'switchbot_secret');
     const authPath = new Secret(this, 'auth_path');
+    const sentryToken = new Secret(this, 'sentry_token');
 
     const sa = new ServiceAccount(this, 'application', [
       // TODO: 対象リソース絞れるか？
@@ -75,13 +76,16 @@ class MyStack extends TerraformStack {
 
     new CloudRun(this, 'app', {
       serviceAccount: sa,
+      buildPermissions: ['secretmanager.versions.access'],
       envvars: {
         PROJECT_ID: this.projectId.value,
+        NEXT_PUBLIC_APP_ENV: env,
       },
       secrets: {
         AUTH_PATH: authPath,
         SWITCHBOT_TOKEN: token,
         SWITCHBOT_SECRET: secret,
+        SENTRY_AUTH_TOKEN: sentryToken,
       },
       github: {
         owner: 'cumet04',

@@ -1,0 +1,62 @@
+name: infra-plan
+on:
+  pull_request:
+    paths:
+      - .github/workflows/infra-plan.yml
+      - infra/**
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 対象環境
+        default: development
+        options:
+          - development
+          - production
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  invoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: infra/.node-version
+      - uses: actions/cache@v4
+        with:
+          path: infra/node_modules
+          key: node_modules-${{ hashFiles('infra/package-lock.json') }}
+      - run: npm ci
+
+      - shell: bash
+        run: echo "PROJECT_ID=$${{ inputs.environment }}" >> $GITHUB_ENV
+        env:
+          development: ${{ secrets.PROJECT_ID_DEVELOPMENT }}
+          production: ${{ secrets.PROJECT_ID_PRODUCTION }}
+      - shell: bash
+        run: echo "PROJECT_NUMBER=$${{ inputs.environment }}" >> $GITHUB_ENV
+        env:
+          development: ${{ secrets.PROJECT_NUMBER_DEVELOPMENT }}
+          production: ${{ secrets.PROJECT_NUMBER_PRODUCTION }}
+
+      - uses: "google-github-actions/auth@v1"
+        with:
+          workload_identity_provider: "projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/ghactions-pool/providers/ghactions-provider"
+          service_account: "ghactions@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.6.0"
+
+      - run: npm run synth
+      - run: terraform init
+        working-directory: infra/cdktf.out/stacks/${{ inputs.environment }}
+      - run: terraform plan
+        working-directory: infra/cdktf.out/stacks/${{ inputs.environment }}

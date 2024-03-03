@@ -11,6 +11,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
   invoke:
@@ -23,14 +24,6 @@ jobs:
         working-directory: infra
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: infra/.node-version
-      - uses: actions/cache@v4
-        with:
-          path: infra/node_modules
-          key: node_modules-${{ hashFiles('infra/package-lock.json') }}
-      - run: npm install
 
       - uses: google-github-actions/auth@v2
         with:
@@ -42,10 +35,26 @@ jobs:
           terraform_version: "~1.6.0"
           terraform_wrapper: false
 
+      - name: setup tfcmt
+        run: |
+          VERSION=v4.9.0
+          curl -L https://github.com/suzuki-shunsuke/tfcmt/releases/download/${VERSION}/tfcmt_linux_amd64.tar.gz | tar xz -C /tmp
+          mv /tmp/tfcmt /usr/local/bin
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: infra/.node-version
+      - uses: actions/cache@v4
+        with:
+          path: infra/node_modules
+          key: node_modules-${{ hashFiles('infra/package-lock.json') }}
+      - run: npm install
+
       - run: npm run synth
       - run: terraform init
         working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
-      - run: terraform plan -no-color
+      - run: tfcmt plan --patch -- terraform plan -no-color
         working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}

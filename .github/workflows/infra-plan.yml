@@ -7,12 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        type: choice
-        description: 対象環境
-        default: development
-        options:
-          - development
-          - production
+        type: environment
 permissions:
   id-token: write
   contents: read
@@ -20,7 +15,9 @@ permissions:
 jobs:
   invoke:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    environment: ${{ inputs.environment || 'development' }}
+    # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: infra
@@ -35,29 +32,10 @@ jobs:
           key: node_modules-${{ hashFiles('infra/package-lock.json') }}
       - run: npm install
 
-      - shell: bash
-        run: |
-          if [ -z "${{ inputs.environment }}" ]; then
-            echo "environment=development" >> $GITHUB_ENV
-          else
-            echo "environment=${{ inputs.environment }}" >> $GITHUB_ENV
-          fi
-
-      - shell: bash
-        run: echo "TF_VAR_project_id=$${{ env.environment }}" >> $GITHUB_ENV
-        env:
-          development: ${{ secrets.PROJECT_ID_DEVELOPMENT }}
-          production: ${{ secrets.PROJECT_ID_PRODUCTION }}
-      - shell: bash
-        run: echo "project_number=$${{ env.environment }}" >> $GITHUB_ENV
-        env:
-          development: ${{ secrets.PROJECT_NUMBER_DEVELOPMENT }}
-          production: ${{ secrets.PROJECT_NUMBER_PRODUCTION }}
-
-      - uses: "google-github-actions/auth@v2"
+      - uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/${{ env.project_number }}/locations/global/workloadIdentityPools/ghactions-pool/providers/ghactions-provider"
-          service_account: "ghactions@${{ env.TF_VAR_project_id }}.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/ghactions-pool/providers/ghactions-provider"
+          service_account: "ghactions@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -66,6 +44,8 @@ jobs:
 
       - run: npm run synth
       - run: terraform init
-        working-directory: infra/cdktf.out/stacks/${{ env.environment }}
+        working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
       - run: terraform plan -no-color
-        working-directory: infra/cdktf.out/stacks/${{ env.environment }}
+        working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}

@@ -6,11 +6,12 @@ import {BillingBudget} from './helpers/billing';
 import {CloudRunApp} from './CloudRunApp';
 import {MetricTable} from './MetricTable';
 
+const EnvTypes = ['production', 'development'] as const;
 declare global {
-  type EnvType = 'production' | 'development';
+  type EnvType = (typeof EnvTypes)[number];
 }
 
-class MyStack extends TerraformStack {
+class BaseStack extends TerraformStack {
   private projectId: TerraformVariable;
 
   constructor(scope: Construct, id: string, env: EnvType) {
@@ -35,7 +36,10 @@ class MyStack extends TerraformStack {
     // gcloud billing projects describe {project_id} で取得できる
     context.gcpBillingAccount = process.env.GOOGLE_BILLING_ACCOUNT_ID!;
 
-    new GcsBackend(this, {bucket: `switchbot-logger_tfstate_${env}`});
+    new GcsBackend(this, {
+      bucket: `switchbot-logger_tfstate_${env}`,
+      prefix: id,
+    });
 
     new GoogleProvider(this, 'gcp', {
       project: this.projectId.value,
@@ -43,20 +47,37 @@ class MyStack extends TerraformStack {
       billingProject: this.projectId.value,
       userProjectOverride: true,
     });
+  }
+}
 
-    new BillingBudget(this, {
-      name: `ベース料金アラート-${this.projectId.value}`,
-      targetProjectId: this.projectId.value,
-      baseAmount: '150',
-      rules: [{current: 100}, {forecasted: 200}, {forecasted: 2000}],
-    });
+class MainStack extends BaseStack {
+  constructor(scope: Construct, id: string, env: EnvType) {
+    super(scope, id, env);
 
     new CloudRunApp(this);
     new MetricTable(this);
   }
 }
 
+class AdminStack extends BaseStack {
+  constructor(scope: Construct, id: string, env: EnvType) {
+    super(scope, id, env);
+
+    const ctx = this.node.getContext('appContext') as AppContext;
+    const projectId = ctx.gcpProjectId.value;
+
+    new BillingBudget(this, {
+      name: `ベース料金アラート-${projectId}`,
+      targetProjectId: projectId,
+      baseAmount: '150',
+      rules: [{current: 100}, {forecasted: 200}, {forecasted: 2000}],
+    });
+  }
+}
+
 const app = new App();
-new MyStack(app, 'production', 'production');
-new MyStack(app, 'development', 'development');
+EnvTypes.forEach(env => {
+  new MainStack(app, env, env);
+  new AdminStack(app, `admin-${env}`, env);
+});
 app.synth();

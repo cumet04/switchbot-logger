@@ -1,12 +1,16 @@
 import {Construct} from 'constructs';
 import {App, GcsBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
-import {ServiceAccount} from './serviceAccount';
-import {BigqueryDataset, BigqueryTable, ScheduledQuery} from './bigquery';
-import {Secret} from './secretManager';
+import {ServiceAccount} from './helpers/serviceAccount';
+import {
+  BigqueryDataset,
+  BigqueryTable,
+  ScheduledQuery,
+} from './helpers/bigquery';
+import {Secret} from './helpers/secretManager';
 import {AppContext} from './baseConstruct';
-import {CloudRun} from './cloudRun';
-import {BillingBudget} from './billing';
+import {CloudRun} from './helpers/cloudRun';
+import {BillingBudget} from './helpers/billing';
 
 declare global {
   type EnvType = 'production' | 'development';

@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {BaseConstruct} from './baseConstruct';
+import {BaseConstruct} from '../baseConstruct';
 import {SecretManagerSecret} from '@cdktf/provider-google/lib/secret-manager-secret';
 
 export class Secret extends BaseConstruct {

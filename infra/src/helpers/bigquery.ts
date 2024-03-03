@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {BaseConstruct} from './baseConstruct';
+import {BaseConstruct} from '../baseConstruct';
 import {BigqueryDataset as gBigqueryDataset} from '@cdktf/provider-google/lib/bigquery-dataset';
 import {
   BigqueryTableConfig,

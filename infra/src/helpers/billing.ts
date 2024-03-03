@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {BaseConstruct} from './baseConstruct';
+import {BaseConstruct} from '../baseConstruct';
 import {BillingBudget as gBillingBudget} from '@cdktf/provider-google/lib/billing-budget';
 
 type ThresholdRule =

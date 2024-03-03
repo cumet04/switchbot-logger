@@ -1,5 +1,5 @@
 import {Construct} from 'constructs';
-import {BaseConstruct} from './baseConstruct';
+import {BaseConstruct} from '../baseConstruct';
 import {
   CloudRunV2Service,
   CloudRunV2ServiceTemplateContainersEnv,

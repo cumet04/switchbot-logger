@@ -2,7 +2,7 @@ import {Construct} from 'constructs';
 import {ServiceAccount as gServiceAccount} from '@cdktf/provider-google/lib/service-account';
 import {ProjectIamCustomRole} from '@cdktf/provider-google/lib/project-iam-custom-role';
 import {ProjectIamMember} from '@cdktf/provider-google/lib/project-iam-member';
-import {BaseConstruct} from './baseConstruct';
+import {BaseConstruct} from '../baseConstruct';
 
 export class ServiceAccount extends BaseConstruct {
   account: gServiceAccount;

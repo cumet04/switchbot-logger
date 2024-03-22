@@ -13,7 +13,7 @@ export class MetricTable extends BaseConstruct {
     new BigqueryDataset(this, 'switchbot');
 
     const datasetId = 'switchbot';
-    const tableId = 'metrics';
+    const tableId = 'metricss';
     const schema = Object.entries({
       Time: 'TIMESTAMP',
       DeviceId: 'STRING',

@@ -18,6 +18,9 @@
     {
       "path": "./infra"
     },
+    {
+      "path": "./e2e"
+    },
   ],
   "settings": {
     "extensions.ignoreRecommendations": true,

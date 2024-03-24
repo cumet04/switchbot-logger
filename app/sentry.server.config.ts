@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
+import { appenv } from "./lib/envvars";
 
 // MEMO: ここに書いても問題なくランタイムの環境変数が評価されるようだ
-const environment = process.env.NEXT_PUBLIC_APP_ENV ?? "local";
+const environment = appenv();
 
 Sentry.init({
   dsn: "https://53f5a903731e07e39ea32248e65c6a22@o4506720064962560.ingest.sentry.io/4506819121709056",

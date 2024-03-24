@@ -37,7 +37,7 @@ const switchbot = {
     return device.deviceType;
   },
 
-  // Devices利用メソッドを呼ぶ前にこれを読んでおく。
+  // Devices利用メソッドを呼ぶ前にこれを呼んでおく。
   // 利用メソッド内から直接呼ばないようにすることでasync汚染を局所化する。
   async EnsureDevices(force = false): Promise<DevicesResponse> {
     if (force || !this._devicesCache) {
@@ -48,7 +48,7 @@ const switchbot = {
         throw new Error(`unexpected status code: ${resp.status}`);
       }
 
-      // TODO: DeviceTypesにないものが渡ってきた場合に、warnログを履きつつ無視するようにする
+      // TODO: DeviceTypesにないものが渡ってきた場合に、warnログを吐きつつ無視するようにする
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       this._devicesCache = (await resp.json()) as DevicesResponse;
     }

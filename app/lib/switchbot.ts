@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { env } from "./envvars";
+import { appenv, env } from "./envvars";
 
 export const DeviceTypes = [
   "Plug Mini (US)",
@@ -29,6 +29,11 @@ type DevicesResponse = {
 const switchbot = {
   DeviceTypeFor(deviceId: DeviceId): DeviceType | null {
     if (!this._devicesCache) throw new Error("devices cache is not set");
+
+    // 開発環境では特定IDのみテスト用に受け付ける。E2Eで使う。
+    // その場合もあくまでdeviceCacheの検証は行う（switchbotのAPI疎通は行う）とする
+    if (appenv() !== "production" && deviceId === "ACDE4828ACED")
+      return "Meter";
 
     const devices = this._devicesCache.body.deviceList;
     const device = devices.find((d) => d.deviceId === deviceId);

@@ -17,3 +17,19 @@ export function env(key: (typeof keys)[number]): string {
   if (v === undefined) throw new Error("envvar not found: " + key);
   return v;
 }
+
+export type AppEnv = "production" | "development" | "local";
+
+export function appenv(): AppEnv {
+  const v = process.env.NEXT_PUBLIC_APP_ENV;
+  switch (v) {
+    case "production":
+    case "development":
+    case "local":
+      return v;
+    case undefined:
+      return "local";
+  }
+  // 環境変数が指定されているが想定外の値の場合はエラー
+  throw new Error("unexpected APP_ENV: " + v);
+}

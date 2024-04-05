@@ -85,7 +85,7 @@ class MainStack extends BaseStack {
       'storage.objects.list',
     ]).account;
     new WorkloadIdentityResources(this, 'ghactions', {
-      repositoryName: 'cumet04/switchbot-logger',
+      repositoryId: '524107595',
       serviceAccount,
     });
   }

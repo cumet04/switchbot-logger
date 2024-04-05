@@ -13,7 +13,7 @@ export class WorkloadIdentityResources extends BaseConstruct {
     name: string,
     config: {
       serviceAccount: ServiceAccount;
-      repositoryName: string;
+      repositoryId: string;
     }
   ) {
     super(scope, 'WorkloadIdentity');
@@ -28,8 +28,9 @@ export class WorkloadIdentityResources extends BaseConstruct {
       workloadIdentityPoolId: pool.workloadIdentityPoolId,
       attributeMapping: {
         'google.subject': 'assertion.sub',
-        'attribute.repository': 'assertion.repository',
+        'attribute.repository_id': 'assertion.repository_id',
       },
+      attributeCondition: `assertion.repository_id == '${config.repositoryId}'`,
       oidc: {
         issuerUri: 'https://token.actions.githubusercontent.com',
       },
@@ -38,7 +39,7 @@ export class WorkloadIdentityResources extends BaseConstruct {
     new ServiceAccountIamMember(this, `member_${name}`, {
       serviceAccountId: config.serviceAccount.id,
       role: 'roles/iam.workloadIdentityUser',
-      member: `principalSet://iam.googleapis.com/${pool.name}/attribute.repository/${config.repositoryName}`,
+      member: `principalSet://iam.googleapis.com/${pool.name}/attribute.repository_id/${config.repositoryId}`,
     });
   }
 }

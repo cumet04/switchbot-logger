@@ -50,7 +50,7 @@ const switchbot = {
       const resp = await this.switchbotGet(endpoint);
 
       if (resp.status !== 200) {
-        throw new Error(`unexpected status code: ${resp.status}`);
+        throw new Error(`unexpected status code: ${resp.status.toString()}`);
       }
 
       // TODO: DeviceTypesにないものが渡ってきた場合に、warnログを吐きつつ無視するようにする

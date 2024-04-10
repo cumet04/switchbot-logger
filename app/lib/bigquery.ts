@@ -1,4 +1,4 @@
-import { BigQuery } from "@google-cloud/bigquery";
+import { BigQuery, BigQueryTimestamp } from "@google-cloud/bigquery";
 
 export async function Record(
   projectId: string,
@@ -59,3 +59,11 @@ function toSensorRecords(rows: any[]) {
     } as SensorRecord;
   });
 }
+
+// next.js 14.0.2-canary.19以降、terserのmangleオプションが完全に有効化されたため、
+// bigqueryクライアントでクラス名がmangleされないことに依存するコードが壊れることへの対処。
+// next.jsのオプションは上書きする手段が無いため、クラス名の方を強制的にを再上書きすることで対応している。
+// refs #38
+Object.defineProperty(BigQueryTimestamp, "name", {
+  value: "BigQueryTimestamp",
+});

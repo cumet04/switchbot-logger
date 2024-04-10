@@ -174,7 +174,11 @@ export function DeviceId(addr: string): DeviceId {
 
 export function TimeStr(time: string): TimeStr {
   // いまのところタイムゾーンは+00:00しか来ないので、それで固定
-  assert.match(time, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}\+00:00$/);
+  // マイクロ秒はこないこともあるので、それも考慮
+  assert.match(
+    time,
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{6}){0,1}\+00:00$/
+  );
   return time as TimeStr;
 }
 /* eslint-enable @typescript-eslint/consistent-type-assertions */

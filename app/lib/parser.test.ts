@@ -72,6 +72,27 @@ describe("parse", () => {
       });
     });
 
+    // raspi側のプログラムが稀にマイクロ秒なしのフォーマットのデータを生成することがある
+    it("Timeはマイクロ秒無しも許容される", () => {
+      const time = "2023-09-30T13:05:48+00:00";
+      const addr = plugUsMac;
+      const input = {
+        time,
+        addr,
+        structs: [
+          // 中身はなんでもよいので、Plug Mini (US)でパース可能な値を入れておく
+          {
+            adtype: 255,
+            desc: "Manufacturer",
+            value: "69096055f93599ff048010260a8f",
+          },
+        ],
+      };
+      Parse(JSON.stringify(input)).forEach((r) => {
+        expect(r.Time).toBe(time);
+      });
+    });
+
     it("不正なJSONデータを入力した場合、JSONパースエラーになる", () => {
       const input = "xxx";
       expect(() => Parse(input)).toThrow(

@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { appenv, env } from "./envvars";
 
-export const DeviceTypes = [
+const DeviceTypes = [
   "Plug Mini (US)",
   "Plug Mini (JP)",
   "Motion Sensor",
@@ -40,6 +40,24 @@ const switchbot = {
     if (!device) return null;
 
     return device.deviceType;
+  },
+
+  DeviceNameFor(deviceId: DeviceId): string | null {
+    if (!this._devicesCache) throw new Error("devices cache is not set");
+
+    const devices = this._devicesCache.body.deviceList;
+    const device = devices.find((d) => d.deviceId === deviceId);
+    if (!device) return null;
+
+    return device.deviceName;
+  },
+
+  DevicesFor(type: DeviceType): Device[] {
+    if (!this._devicesCache) throw new Error("devices cache is not set");
+
+    return this._devicesCache.body.deviceList.filter(
+      (d) => d.deviceType === type
+    );
   },
 
   // Devices利用メソッドを呼ぶ前にこれを呼んでおく。
@@ -103,6 +121,6 @@ export function SetDummyDevicesCache(devices: Device[]) {
 
 const exportSwitchbot: Pick<
   typeof switchbot,
-  "DeviceTypeFor" | "EnsureDevices"
+  "DeviceTypeFor" | "DeviceNameFor" | "DevicesFor" | "EnsureDevices"
 > = switchbot;
 export default exportSwitchbot;

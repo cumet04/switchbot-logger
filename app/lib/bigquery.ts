@@ -21,13 +21,21 @@ export async function Record(
     );
 }
 
+export async function Query(projectId: string, query: string) {
+  const bigquery = new BigQuery({ projectId });
+  const resp = await bigquery.query(query);
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return resp.flatMap((r) => r) as Record<string, unknown>[];
+}
+
 // テストやデバッグ用に最新のデータを取得する
 export async function QueryHeadRecords(projectId: string) {
   const bigquery = new BigQuery({ projectId });
 
   const query = [
     "SELECT Time, DeviceId, Type, Value",
-    `FROM switchbot.metrics`,
+    "FROM switchbot.metrics",
     // データ投入はraspiから1分ごとなので、直近2分を取得すればなんらかのデータが含まれるはず
     "WHERE Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 MINUTE)",
     "LIMIT 500", // 念の為上限を設ける
@@ -56,6 +64,7 @@ function toSensorRecords(rows: any[]) {
       ...r,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       Time: r.Time.value, // これはミリ秒精度までしか出てないが、ひとまず気にしない
+      // Timestampな値はBigQueryTimestamp型で返ってくるので、valueでstringな値が出せる
     } as SensorRecord;
   });
 }

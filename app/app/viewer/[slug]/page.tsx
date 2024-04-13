@@ -60,7 +60,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
       ...Object.fromEntries(entries),
       name: new Date((r.Time as BigQueryTimestamp).value).toLocaleString(
         "ja-JP",
-        { timeStyle: "short" }
+        { timeStyle: "short", timeZone: "Asia/Tokyo" }
       ),
     } as ChartRecord;
     /* eslint-enable @typescript-eslint/consistent-type-assertions */

@@ -36,8 +36,9 @@ export function Chart(props: { name: string; data: ChartRecord[] }) {
             />
           ))}
           <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-          <XAxis dataKey="name" />
-          <YAxis type="number" domain={["auto", "auto"]} />
+          {/* ticksを自前で指定して、N時ピッタリの軸にしたほうが見やすそう */}
+          <XAxis dataKey="name" interval={50} fontSize={14} />
+          <YAxis type="number" domain={["auto", "auto"]} fontSize={14} />
           <Tooltip
             // 縦軸のラベル値をいい感じに見やすくする。
             // 値の幅によっては45,50,55などちょうどいい整数が渡ってくるが、値の幅が小さい場合（特に気温）には

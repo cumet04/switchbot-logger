@@ -4,7 +4,7 @@ import {
   BigqueryDataset,
   BigqueryTable,
   ScheduledQuery,
-} from './helpers/bigquery';
+} from './constructs/bigquery';
 
 export class MetricTable extends BaseConstruct {
   constructor(scope: Construct) {

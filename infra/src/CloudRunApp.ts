@@ -1,8 +1,8 @@
 import {Construct} from 'constructs';
 import {BaseConstruct} from './baseConstruct';
-import {Secret} from './helpers/secretManager';
-import {ServiceAccount} from './helpers/serviceAccount';
-import {CloudRun} from './helpers/cloudRun';
+import {Secret} from './constructs/secretManager';
+import {ServiceAccount} from './constructs/serviceAccount';
+import {CloudRun} from './constructs/cloudRun';
 
 export class CloudRunApp extends BaseConstruct {
   constructor(scope: Construct) {

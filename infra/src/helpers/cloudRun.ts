@@ -79,7 +79,7 @@ export class CloudRun extends BaseConstruct {
             // 初期構築時は、先にtriggerとrepositoryを作ってビルドを行い、できたimageを指定する
             image: '',
             env: normalENvs.concat(secretEnvs),
-            ports: [{containerPort: 8080}],
+            ports: {containerPort: 8080},
           },
         ],
         scaling: {

@@ -2,10 +2,8 @@
   "files.exclude": {
     // hide first-level folders from root
     "app": true,
-    "recorder": true,
     "raspi": true,
-    "switchbot": true,
-    "viewer": true,
     "infra": true,
+    "e2e": true,
   }
 }

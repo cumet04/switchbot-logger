@@ -15,9 +15,7 @@ declare global {
   type EnvType = (typeof EnvTypes)[number];
 }
 
-const tfstateBucketName = (env: EnvType) =>
-  'switchbot-logger_tfstate_' +
-  (env === 'production' ? 'production' : 'development'); // バケットはstagingではなくdevelopmentで切ってあるので、しばらくこれで
+const tfstateBucketName = (env: EnvType) => `switchbot-logger_tfstate_${env}`;
 
 class BaseStack extends TerraformStack {
   private projectId: TerraformVariable;
@@ -123,8 +121,18 @@ class AdminStack extends BaseStack {
     const projectId = ctx.gcpProjectId.value;
 
     [
-      // 漏れてるやつは判明次第順次足す。dev環境を作り直すときにまとめて見る
-      'sts.googleapis.com', // MEMO: これいらないっぽい？prdでenableになってない
+      'iam.googleapis.com',
+      'billingbudgets.googleapis.com',
+      'secretmanager.googleapis.com',
+      'bigquery.googleapis.com',
+      'bigquerydatatransfer.googleapis.com',
+      'artifactregistry.googleapis.com',
+      'cloudbuild.googleapis.com',
+      'run.googleapis.com',
+
+      // 下記2つはAPI有効化自体に必要なので、初回は手動で有効化が必要
+      'serviceusage.googleapis.com',
+      'cloudresourcemanager.googleapis.com',
     ].forEach(service => {
       new ProjectService(this, `enable-api_${service}`, {
         project: projectId,

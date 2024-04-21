@@ -18,13 +18,13 @@ export function env(key: (typeof keys)[number]): string {
   return v;
 }
 
-export type AppEnv = "production" | "development" | "local";
+export type AppEnv = "production" | "staging" | "local";
 
 export function appenv(): AppEnv {
   const v = process.env.NEXT_PUBLIC_APP_ENV;
   switch (v) {
     case "production":
-    case "development":
+    case "staging":
     case "local":
       return v;
     case undefined:

@@ -16,7 +16,7 @@ permissions:
 jobs:
   invoke:
     runs-on: ubuntu-22.04
-    environment: ${{ inputs.environment || 'development' }}
+    environment: ${{ inputs.environment || 'staging' }}
     # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定
     timeout-minutes: 20
     defaults:

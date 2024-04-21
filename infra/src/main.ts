@@ -9,7 +9,7 @@ import {ProjectService} from '@cdktf/provider-google/lib/project-service';
 import {ServiceAccount} from './helpers/serviceAccount';
 import {WorkloadIdentityResources} from './workloadIdentity';
 
-const EnvTypes = ['production', 'development'] as const;
+const EnvTypes = ['production', 'staging'] as const;
 declare global {
   type EnvType = (typeof EnvTypes)[number];
 }
@@ -28,7 +28,7 @@ class BaseStack extends TerraformStack {
     this.projectId = new TerraformVariable(this, 'project_id', {
       type: 'string',
       default: {
-        development: process.env.PROJECT_ID_DEVELOPMENT,
+        staging: process.env.PROJECT_ID_STAGING,
         production: process.env.PROJECT_ID_PRODUCTION,
       }[env],
     });
@@ -40,7 +40,9 @@ class BaseStack extends TerraformStack {
     context.gcpBillingAccount = process.env.GOOGLE_BILLING_ACCOUNT_ID!;
 
     new GcsBackend(this, {
-      bucket: `switchbot-logger_tfstate_${env}`,
+      bucket:
+        'switchbot-logger_tfstate_' +
+        (env === 'production' ? 'production' : 'development'), // バケットはstagingではなくdevelopmentで切ってあるので、しばらくこれで
       prefix: id,
     });
 
@@ -100,7 +102,7 @@ class AdminStack extends BaseStack {
 
     [
       // 漏れてるやつは判明次第順次足す。dev環境を作り直すときにまとめて見る
-      'sts.googleapis.com',
+      'sts.googleapis.com', // MEMO: これいらないっぽい？prdでenableになってない
     ].forEach(service => {
       new ProjectService(this, `enable-api_${service}`, {
         project: projectId,

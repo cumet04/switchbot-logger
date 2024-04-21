@@ -5,13 +5,13 @@ import {ArtifactRegistryRepository} from '@cdktf/provider-google/lib/artifact-re
 export class ArRepository extends BaseConstruct {
   public repo: ArtifactRegistryRepository;
 
-  constructor(scope: Construct, name: string) {
+  constructor(scope: Construct, name: string, options: {location: string}) {
     super(scope, `ArRepository_${name}`);
 
     this.repo = new ArtifactRegistryRepository(this, 'repository', {
       repositoryId: name,
       format: 'DOCKER',
-      location: this.gcpLocation,
+      location: options.location,
     });
   }
 }

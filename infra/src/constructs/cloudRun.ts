@@ -13,6 +13,7 @@ export class CloudRun extends BaseConstruct {
     scope: Construct,
     name: string,
     options: {
+      location: string;
       serviceAccount: ServiceAccount;
       envvars?: Record<string, string>;
       secrets?: Record<string, Secret>;
@@ -37,7 +38,7 @@ export class CloudRun extends BaseConstruct {
 
     const service = new CloudRunV2Service(this, 'service', {
       name,
-      location: this.gcpLocation,
+      location: options.location,
       template: {
         executionEnvironment: 'EXECUTION_ENVIRONMENT_GEN2',
         serviceAccount: options.serviceAccount.account.email,

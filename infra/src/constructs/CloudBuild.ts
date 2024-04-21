@@ -2,20 +2,24 @@ import {Construct} from 'constructs';
 import {BaseConstruct} from '../baseConstruct';
 import {
   CloudbuildTrigger,
-  CloudbuildTriggerGithub,
+  CloudbuildTriggerRepositoryEventConfig,
 } from '@cdktf/provider-google/lib/cloudbuild-trigger';
 import {ArtifactRegistryRepository} from '@cdktf/provider-google/lib/artifact-registry-repository';
 import {ServiceAccount} from './serviceAccount';
+import {Cloudbuildv2Repository} from '@cdktf/provider-google/lib/cloudbuildv2-repository';
+import {Cloudbuildv2Connection} from '@cdktf/provider-google/lib/cloudbuildv2-connection';
 
 export class CloudBuild extends BaseConstruct {
   constructor(
     scope: Construct,
     name: string,
     options: {
+      location: string;
       repo: ArtifactRegistryRepository;
       serviceName: string;
       buildPermissions?: string[];
-      github: CloudbuildTriggerGithub;
+      githubRepo: string;
+      event: Omit<CloudbuildTriggerRepositoryEventConfig, 'repository'>;
       buildYamlPath: string;
     }
   ) {
@@ -26,14 +30,36 @@ export class CloudBuild extends BaseConstruct {
       ...(options.buildPermissions ?? []),
     ]);
 
+    const conn = new Cloudbuildv2Connection(this, 'connection', {
+      location: options.location,
+      name: 'github',
+      // connectionの実体はgithubアカウントへのappインストールがあったりそれ固有のIDが属性になったりするため
+      // terraform管理はリソースの存在だけにとどめ、github app関連の部分は管理しない。
+      // 初期投入はconnectionだけ手動で作成し、importする。
+      // なお、これに関連してSecretManagerのsecret（github-oauthtokenみたいなの）が一つ自動生成される。
+      lifecycle: {
+        ignoreChanges: ['github_config'],
+      },
+    });
+
+    const repo = new Cloudbuildv2Repository(this, 'repo', {
+      name: options.serviceName,
+      location: options.location,
+      parentConnection: conn.id,
+      remoteUri: options.githubRepo,
+    });
+
     new CloudbuildTrigger(this, 'trigger', {
       name,
-      location: 'global',
+      location: options.location,
       filename: options.buildYamlPath,
-      github: options.github,
+      repositoryEventConfig: {
+        repository: repo.id,
+        ...options.event,
+      },
       substitutions: {
         _SERVICE_NAME: options.serviceName,
-        _REGION: this.gcpLocation,
+        _REGION: options.location, // MEMO: これはCloudRunのリージョンと合わせる
         _IMAGE_URL: `${options.repo.location}-docker.pkg.dev/${options.repo.project}/${options.repo.repositoryId}/main`,
       },
       serviceAccount: buildAccount.account.id,

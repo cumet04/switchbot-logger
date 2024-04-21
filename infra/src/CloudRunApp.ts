@@ -11,16 +11,23 @@ export class CloudRunApp extends BaseConstruct {
     super(scope, 'CloudRunApp');
 
     const serviceName = 'app';
+    // CloudRun一式のリージョンは、いくつかの理由によりus-central1にする:
+    // * Artifact Registry, Cloud Build, Cloud Runのリージョンを揃えることで、image pullの通信コストを抑えられる
+    // * Cloud Buildはなんらかの条件（？）で一部のリージョンでしか動作しないことがある（us-central1は動作する）
+    //   - https://cloud.google.com/build/docs/locations#restricted_regions_for_some_projects
+    // * Cloud Runでカスタムドメインを直接使う場合、asia-northeast1はレイテンシが大きく増加する
+    //   - https://cloud.google.com/run/docs/issues#latency-domains
+    const location = 'us-central1';
 
-    const repo = new ArRepository(this, serviceName);
+    const repo = new ArRepository(this, serviceName, {location});
 
     new CloudBuild(this, 'app', {
+      location,
       repo: repo.repo,
       serviceName,
       buildPermissions: ['secretmanager.versions.access'],
-      github: {
-        owner: 'cumet04',
-        name: 'switchbot-logger',
+      githubRepo: 'https://github.com/cumet04/switchbot-logger.git',
+      event: {
         push: {
           // mainが更新された場合は開発系も更新する
           branch: this.env === 'production' ? '^main$' : `^(main|${this.env})$`,
@@ -45,6 +52,7 @@ export class CloudRunApp extends BaseConstruct {
     ]);
 
     new CloudRun(this, serviceName, {
+      location,
       serviceAccount: sa,
       envvars: {
         PROJECT_ID: this.projectId.value,

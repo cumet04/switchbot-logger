@@ -92,6 +92,8 @@ class MainStack extends BaseStack {
       'bigquery.tables.get',
       'bigquery.transfers.get',
       'cloudbuild.builds.get',
+      'cloudbuild.connections.get',
+      'cloudbuild.repositories.get',
       'iam.roles.get',
       'iam.serviceAccounts.get',
       'iam.serviceAccounts.getIamPolicy',

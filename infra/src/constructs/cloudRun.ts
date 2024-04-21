@@ -4,11 +4,6 @@ import {
   CloudRunV2Service,
   CloudRunV2ServiceTemplateContainersEnv,
 } from '@cdktf/provider-google/lib/cloud-run-v2-service';
-import {
-  CloudbuildTrigger,
-  CloudbuildTriggerGithub,
-} from '@cdktf/provider-google/lib/cloudbuild-trigger';
-import {ArtifactRegistryRepository} from '@cdktf/provider-google/lib/artifact-registry-repository';
 import {CloudRunServiceIamBinding} from '@cdktf/provider-google/lib/cloud-run-service-iam-binding';
 import {Secret} from './secretManager';
 import {ServiceAccount} from './serviceAccount';
@@ -19,38 +14,11 @@ export class CloudRun extends BaseConstruct {
     name: string,
     options: {
       serviceAccount: ServiceAccount;
-      buildPermissions?: string[];
       envvars?: Record<string, string>;
       secrets?: Record<string, Secret>;
-      github: CloudbuildTriggerGithub;
-      buildYamlPath: string;
     }
   ) {
     super(scope, `CloudRun_${name}`);
-
-    const repo = new ArtifactRegistryRepository(this, 'repository', {
-      repositoryId: name,
-      format: 'DOCKER',
-      location: this.gcpLocation,
-    });
-
-    const buildAccount = new ServiceAccount(this, 'builder', [
-      ...this.CloudBuildServiceAccountPermissions(),
-      ...(options.buildPermissions ?? []),
-    ]);
-
-    new CloudbuildTrigger(this, 'trigger', {
-      name: `cloudrun-${name}`,
-      location: 'global',
-      filename: options.buildYamlPath,
-      github: options.github,
-      substitutions: {
-        _SERVICE_NAME: name,
-        _REGION: this.gcpLocation,
-        _IMAGE_URL: `${repo.location}-docker.pkg.dev/${repo.project}/${repo.repositoryId}/main`,
-      },
-      serviceAccount: buildAccount.account.id,
-    });
 
     const normalENvs = Object.entries(options.envvars ?? {}).map(
       ([key, value]): CloudRunV2ServiceTemplateContainersEnv => ({
@@ -109,18 +77,5 @@ export class CloudRun extends BaseConstruct {
       role: 'roles/run.invoker',
       members: ['allUsers'],
     });
-  }
-
-  private CloudBuildServiceAccountPermissions() {
-    return [
-      'artifactregistry.repositories.downloadArtifacts',
-      'artifactregistry.repositories.uploadArtifacts',
-      'iam.serviceAccounts.actAs',
-      'logging.logEntries.create',
-      'run.operations.get',
-      'run.services.get',
-      'run.services.update',
-      'secretmanager.versions.access',
-    ];
   }
 }

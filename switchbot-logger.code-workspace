@@ -10,12 +10,6 @@
       "path": "./raspi"
     },
     {
-      "path": "./switchbot"
-    },
-    {
-      "path": "./viewer"
-    },
-    {
       "path": "./infra"
     },
     {

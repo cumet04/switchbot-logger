@@ -2,17 +2,20 @@ import {Construct} from 'constructs';
 import {App, GcsBackend, TerraformStack, TerraformVariable} from 'cdktf';
 import {GoogleProvider} from '@cdktf/provider-google/lib/provider';
 import {AppContext} from './baseConstruct';
-import {BillingBudget} from './helpers/billing';
+import {BillingBudget} from './constructs/billing';
 import {CloudRunApp} from './CloudRunApp';
 import {MetricTable} from './MetricTable';
 import {ProjectService} from '@cdktf/provider-google/lib/project-service';
-import {ServiceAccount} from './helpers/serviceAccount';
+import {ServiceAccount} from './constructs/serviceAccount';
 import {WorkloadIdentityResources} from './workloadIdentity';
+import {GcsBucket} from './constructs/gcsBucket';
 
 const EnvTypes = ['production', 'staging'] as const;
 declare global {
   type EnvType = (typeof EnvTypes)[number];
 }
+
+const tfstateBucketName = (env: EnvType) => `switchbot-logger_tfstate_${env}`;
 
 class BaseStack extends TerraformStack {
   private projectId: TerraformVariable;
@@ -40,9 +43,7 @@ class BaseStack extends TerraformStack {
     context.gcpBillingAccount = process.env.GOOGLE_BILLING_ACCOUNT_ID!;
 
     new GcsBackend(this, {
-      bucket:
-        'switchbot-logger_tfstate_' +
-        (env === 'production' ? 'production' : 'development'), // バケットはstagingではなくdevelopmentで切ってあるので、しばらくこれで
+      bucket: tfstateBucketName(env),
       prefix: id,
     });
 
@@ -58,6 +59,24 @@ class BaseStack extends TerraformStack {
 class MainStack extends BaseStack {
   constructor(scope: Construct, id: string, env: EnvType) {
     super(scope, id, env);
+
+    new GcsBucket(this, {
+      name: tfstateBucketName(env),
+      // tfstateはさほどサイズ大きくもないし、あとから参照したいことが稀にあるので基本的にはバージョン残す
+      // ただしproduction以外はゴミが増えやすいので30日程度残して削除
+      versioning: {enabled: true},
+      lifecycleRule:
+        env === 'production'
+          ? []
+          : [
+              {
+                action: {type: 'Delete'},
+                condition: {
+                  daysSinceNoncurrentTime: 30,
+                },
+              },
+            ],
+    });
 
     new CloudRunApp(this);
     new MetricTable(this);
@@ -83,6 +102,7 @@ class MainStack extends BaseStack {
       'run.services.getIamPolicy',
       'secretmanager.secrets.get',
       'serviceusage.services.use',
+      'storage.buckets.get',
       'storage.objects.get',
       'storage.objects.list',
     ]).account;
@@ -101,8 +121,18 @@ class AdminStack extends BaseStack {
     const projectId = ctx.gcpProjectId.value;
 
     [
-      // 漏れてるやつは判明次第順次足す。dev環境を作り直すときにまとめて見る
-      'sts.googleapis.com', // MEMO: これいらないっぽい？prdでenableになってない
+      'iam.googleapis.com',
+      'billingbudgets.googleapis.com',
+      'secretmanager.googleapis.com',
+      'bigquery.googleapis.com',
+      'bigquerydatatransfer.googleapis.com',
+      'artifactregistry.googleapis.com',
+      'cloudbuild.googleapis.com',
+      'run.googleapis.com',
+
+      // 下記2つはAPI有効化自体に必要なので、初回は手動で有効化が必要
+      'serviceusage.googleapis.com',
+      'cloudresourcemanager.googleapis.com',
     ].forEach(service => {
       new ProjectService(this, `enable-api_${service}`, {
         project: projectId,

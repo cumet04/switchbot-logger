@@ -20,7 +20,7 @@ Raspi上のコードや設定はごく最低限にし、デプロイやメンテ
 
 ### infra
 * GCPプロジェクトは適宜セットアップ。APIも適宜有効化
-* infra配下で`npm run apply development (or production)`
+* infra配下で`npm run apply staging (or production)`
   - 初期セットアップ時は多分コケる。SecretManagerで各種値を埋めてやり直す
 
 TODO: 記載

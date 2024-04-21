@@ -2,8 +2,8 @@ import {test, expect, request} from '@playwright/test';
 import {describe} from 'node:test';
 
 // TODO: ここの値をCIでどう渡すか・ローカルでどう設定するかを考える
-const host = process.env.APP_DEVELOPMENT_HOST;
-const auth_path = process.env.APP_DEVELOPMENT_AUTH_PATH;
+const host = process.env.APP_STAGING_HOST;
+const auth_path = process.env.APP_STAGING_AUTH_PATH;
 // const host = 'http://localhost:3000';
 // const auth_path = 'local';
 

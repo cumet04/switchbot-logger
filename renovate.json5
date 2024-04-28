@@ -1,7 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "timezone": "Asia/Tokyo",
   "extends": [
     "config:recommended"
   ],
-  "includePaths": ["infra/**"]
+  "includePaths": ["infra/**"],
+  "packageRules": [
+    {
+      "matchFileNames": ["infra/**"],
+      "schedule": ["on the first day of the month"]
+    }
+  ]
 }

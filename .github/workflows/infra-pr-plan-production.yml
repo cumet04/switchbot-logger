@@ -1,14 +1,12 @@
-name: infra-plan
+# PRのコードで本番に向けたplanを実行し、そのPRが本番に対して何を変更するのかをコメントする
+
+name: infra-pr-plan-production
 on:
   pull_request:
     paths:
       - .github/actions/setup-cdktf/**
       - .github/workflows/infra-plan.yml
       - infra/**
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: environment
 permissions:
   id-token: write
   contents: read
@@ -17,7 +15,7 @@ permissions:
 jobs:
   invoke:
     runs-on: ubuntu-22.04
-    environment: ${{ inputs.environment || 'staging' }}
+    environment: production
     # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定
     timeout-minutes: 20
     steps:

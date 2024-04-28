@@ -20,6 +20,6 @@
     "eslint-plugin-prettier": "*",
     "gts": "5.3.0",
     "ts-node": "10.9.2",
-    "typescript": "<5.2"
+    "typescript": "<5.5"
   }
 }

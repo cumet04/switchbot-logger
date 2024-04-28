@@ -1,0 +1,14 @@
+name: infra-check-no-change-skipped
+on:
+  pull_request:
+    paths-ignore:
+      - .github/actions/setup-cdktf/**
+      - .github/workflows/infra-check-no-change.yml
+      - infra/**
+
+jobs:
+  check-no-change:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - run: true

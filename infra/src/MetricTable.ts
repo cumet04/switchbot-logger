@@ -33,7 +33,7 @@ export class MetricTable extends BaseConstruct {
 
     // MEMO: SELECT * ではなくCOUNTとかのほうが料金やすいかも？
     const aliveQuery = [
-      'SELECT *',
+      'SELECT **',
       `FROM ${datasetId}.${tableId}`,
       'WHERE Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 MINUTE)',
     ].join(' ');

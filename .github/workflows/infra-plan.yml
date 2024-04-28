@@ -31,8 +31,10 @@ jobs:
       - run: terraform init
         working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
       - run: |
-          tfcmt --config $GITHUB_WORKSPACE/.github/tfcmt-config/check-no-change.yml plan --patch -- \
-            terraform plan -detailed-exitcode -no-color
+          tfcmt \
+            --config $GITHUB_WORKSPACE/.github/tfcmt-config/check-no-change.yml \
+            --output $GITHUB_STEP_SUMMARY  \
+            plan -- terraform plan -detailed-exitcode -no-color
         working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

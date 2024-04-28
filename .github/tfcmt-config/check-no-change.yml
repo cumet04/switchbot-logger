@@ -1,5 +1,3 @@
 terraform:
   plan:
     disable_label: true
-    when_no_changes:
-      disable_comment: true

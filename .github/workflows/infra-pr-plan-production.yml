@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - .github/actions/setup-cdktf/**
-      - .github/workflows/infra-plan.yml
+      - .github/workflows/infra-pr-plan-production.yml
       - infra/**
 permissions:
   id-token: write

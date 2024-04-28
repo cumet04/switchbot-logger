@@ -1,0 +1,35 @@
+# PRのコードで本番に向けたplanを実行し、そのPRが本番に対して何を変更するのかをコメントする
+
+name: infra-pr-plan-production
+on:
+  pull_request:
+    paths:
+      - .github/actions/setup-cdktf/**
+      - .github/workflows/infra-plan.yml
+      - infra/**
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  invoke:
+    runs-on: ubuntu-22.04
+    environment: production
+    # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-cdktf
+        with:
+          gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp_project_number: ${{ secrets.GCP_PROJECT_NUMBER }}
+
+      - run: terraform init
+        working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
+      - run: tfcmt plan --patch -- terraform plan -no-color
+        working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}

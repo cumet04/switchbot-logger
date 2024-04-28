@@ -1,0 +1,42 @@
+name: "setup-cdktf"
+description: cdktfの各種アクションを実施するための前提条件（各種認証やツール、npm installなど）を行う
+inputs:
+  gcp_project_id:
+    required: true
+    description: 認証を通すGCPプロジェクトのプロジェクトID
+  gcp_project_number:
+    required: true
+    description: 認証を通すGCPプロジェクトのプロジェクト番号
+runs:
+  using: "composite"
+  steps:
+    - uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: "projects/${{ inputs.gcp_project_number }}/locations/global/workloadIdentityPools/ghactions-pool/providers/ghactions-provider"
+        service_account: "ghactions@${{ inputs.gcp_project_id }}.iam.gserviceaccount.com"
+
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: "1.8.1"
+        terraform_wrapper: false
+
+    - name: setup tfcmt
+      shell: bash
+      run: |
+        VERSION=v4.9.0
+        curl -L https://github.com/suzuki-shunsuke/tfcmt/releases/download/${VERSION}/tfcmt_linux_amd64.tar.gz | tar xz -C /tmp
+        mv /tmp/tfcmt /usr/local/bin
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: infra/.node-version
+    - uses: actions/cache@v4
+      with:
+        path: infra/node_modules
+        key: node_modules-${{ hashFiles('infra/package-lock.json') }}
+    - run: npm install
+      shell: bash
+      working-directory: infra
+    - run: npm run synth
+      shell: bash
+      working-directory: infra

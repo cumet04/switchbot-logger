@@ -1,0 +1,45 @@
+# 変更したもしくは現在のcdktfのコードと、対象環境のインフラに差分が無いことを確認するワークフロー
+# インフラ変更のPRに対してstaging環境が既に適用済であることを確認したり、
+# cdktfのpackgage bump時に差分無しを確認したり、
+# 本番環境で定期的に実行して意図せぬ手作業が混ざっていないかを確認するのに使う
+
+name: infra-check-no-change
+on:
+  pull_request:
+    paths:
+      - .github/actions/setup-cdktf/**
+      - .github/workflows/infra-plan.yml
+      - infra/**
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  invoke:
+    runs-on: ubuntu-22.04
+    environment: ${{ inputs.environment || 'staging' }}
+    # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-cdktf
+        with:
+          gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          gcp_project_number: ${{ secrets.GCP_PROJECT_NUMBER }}
+
+      - run: terraform init
+        working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
+      - run: |
+          tfcmt \
+            --config $GITHUB_WORKSPACE/.github/tfcmt-config/check-no-change.yml \
+            --output $GITHUB_STEP_SUMMARY  \
+            plan -- terraform plan -detailed-exitcode -no-color
+        working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}

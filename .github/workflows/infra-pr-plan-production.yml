@@ -13,7 +13,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  invoke:
+  pr-plan-production:
     runs-on: ubuntu-22.04
     environment: production
     # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定

@@ -3,10 +3,38 @@ import {BaseConstruct} from './baseConstruct';
 import {Secret} from './constructs/secretManager';
 import {ServiceAccount} from './constructs/serviceAccount';
 import {CloudRun} from './constructs/cloudRun';
+import {CloudBuild} from './constructs/CloudBuild';
+import {ArRepository} from './constructs/arRepository';
 
 export class CloudRunApp extends BaseConstruct {
   constructor(scope: Construct) {
     super(scope, 'CloudRunApp');
+
+    const serviceName = 'app';
+    // CloudRun一式のリージョンは、いくつかの理由によりus-central1にする:
+    // * Artifact Registry, Cloud Build, Cloud Runのリージョンを揃えることで、image pullの通信コストを抑えられる
+    // * Cloud Buildはなんらかの条件（？）で一部のリージョンでしか動作しないことがある（us-central1は動作する）
+    //   - https://cloud.google.com/build/docs/locations#restricted_regions_for_some_projects
+    // * Cloud Runでカスタムドメインを直接使う場合、asia-northeast1はレイテンシが大きく増加する
+    //   - https://cloud.google.com/run/docs/issues#latency-domains
+    const location = 'us-central1';
+
+    const repo = new ArRepository(this, serviceName, {location});
+
+    new CloudBuild(this, 'app', {
+      location,
+      repo: repo.repo,
+      serviceName,
+      buildPermissions: ['secretmanager.versions.access'],
+      githubRepo: 'https://github.com/cumet04/switchbot-logger.git',
+      event: {
+        push: {
+          // mainが更新された場合は開発系も更新する
+          branch: this.env === 'production' ? '^main$' : `^(main|${this.env})$`,
+        },
+      },
+      buildYamlPath: 'app/cloudbuild.yaml',
+    });
 
     const token = new Secret(this, 'switchbot_token');
     const secret = new Secret(this, 'switchbot_secret');
@@ -23,9 +51,9 @@ export class CloudRunApp extends BaseConstruct {
       'secretmanager.versions.access',
     ]);
 
-    new CloudRun(this, 'app', {
+    new CloudRun(this, serviceName, {
+      location,
       serviceAccount: sa,
-      buildPermissions: ['secretmanager.versions.access'],
       envvars: {
         PROJECT_ID: this.projectId.value,
         NEXT_PUBLIC_APP_ENV: this.env,
@@ -36,15 +64,6 @@ export class CloudRunApp extends BaseConstruct {
         SWITCHBOT_SECRET: secret,
         SENTRY_AUTH_TOKEN: sentryToken,
       },
-      github: {
-        owner: 'cumet04',
-        name: 'switchbot-logger',
-        push: {
-          // mainが更新された場合は開発系も更新する
-          branch: this.env === 'production' ? '^main$' : `^(main|${this.env})$`,
-        },
-      },
-      buildYamlPath: 'app/cloudbuild.yaml',
     });
   }
 }

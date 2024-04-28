@@ -15,9 +15,13 @@ runs:
         workload_identity_provider: "projects/${{ inputs.gcp_project_number }}/locations/global/workloadIdentityPools/ghactions-pool/providers/ghactions-provider"
         service_account: "ghactions@${{ inputs.gcp_project_id }}.iam.gserviceaccount.com"
 
+    - name: Detect Terraform version
+      shell: bash
+      run: |
+        printf "TF_VERSION=%s" $(cat infra/.terraform-version) >> $GITHUB_ENV
     - uses: hashicorp/setup-terraform@v3
       with:
-        terraform_version: "1.8.1"
+        terraform_version: ${{ env.TF_VERSION }}
         terraform_wrapper: false
 
     - name: setup tfcmt

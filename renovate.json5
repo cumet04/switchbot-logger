@@ -8,6 +8,12 @@
   "packageRules": [
     {
       "matchFileNames": ["infra/**"],
+      "excludePackageNames": [
+        // gtsの依存の@typescript-eslint/typescript-estreeのバージョンの対応を見ながら上げる
+        "typescript",
+        // FIXME: .node-versionのとメジャーバージョンをいい感じに合わせて処理できるか？
+        "@types/node"
+      ],
       "schedule": ["on the first day of the month"]
     }
   ]

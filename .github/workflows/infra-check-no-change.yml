@@ -8,7 +8,7 @@ on:
   pull_request:
     paths:
       - .github/actions/setup-cdktf/**
-      - .github/workflows/infra-plan.yml
+      - .github/workflows/infra-check-no-change.yml
       - infra/**
   workflow_dispatch:
     inputs:
@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  invoke:
+  check-no-change:
     runs-on: ubuntu-22.04
     environment: ${{ inputs.environment || 'staging' }}
     # npm install, synth, refresh stateが重なると遅くなる可能性があるため、長めに設定

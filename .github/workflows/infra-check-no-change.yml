@@ -1,4 +1,9 @@
-name: infra-plan
+# 変更したもしくは現在のcdktfのコードと、対象環境のインフラに差分が無いことを確認するワークフロー
+# インフラ変更のPRに対してstaging環境が既に適用済であることを確認したり、
+# cdktfのpackgage bump時に差分無しを確認したり、
+# 本番環境で定期的に実行して意図せぬ手作業が混ざっていないかを確認するのに使う
+
+name: infra-check-no-change
 on:
   pull_request:
     paths:
@@ -12,7 +17,6 @@ on:
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
 
 jobs:
   invoke:
@@ -30,7 +34,11 @@ jobs:
 
       - run: terraform init
         working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
-      - run: tfcmt plan --patch -- terraform plan -no-color
+      - run: |
+          tfcmt \
+            --config $GITHUB_WORKSPACE/.github/tfcmt-config/check-no-change.yml \
+            --output $GITHUB_STEP_SUMMARY  \
+            plan -- terraform plan -detailed-exitcode -no-color
         working-directory: infra/cdktf.out/stacks/${{ vars.INFRA_ENV }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

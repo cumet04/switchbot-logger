@@ -4,6 +4,7 @@
   "extends": [
     "config:recommended"
   ],
+  "dependencyDashboard": false,
   "includePaths": ["infra/**"],
   "packageRules": [
     {

@@ -14,7 +14,11 @@
         // FIXME: .node-versionのとメジャーバージョンをいい感じに合わせて処理できるか？
         "@types/node"
       ],
-      "schedule": ["on the first day of the month"]
+      "schedule": ["on the first day of the month"],
+      "lockFileMaintenance": {
+        "enabled": true,
+        "schedule": ["on the 15th day of the month"]
+      }
     }
   ]
 }

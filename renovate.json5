@@ -14,7 +14,13 @@
         // FIXME: .node-versionのとメジャーバージョンをいい感じに合わせて処理できるか？
         "@types/node"
       ],
-      "schedule": ["on the first day of the month"]
+      // MEMO: scheduleのフォーマット https://breejs.github.io/later/parsers.html#text
+      // playground https://codepen.io/antonlydike/full/Kgygpr
+      "schedule": ["on the first day of the month"],
+      "lockFileMaintenance": {
+        "enabled": true,
+        "schedule": ["on the 15th day of the month"]
+      }
     }
   ]
 }

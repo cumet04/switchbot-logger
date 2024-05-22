@@ -2,6 +2,17 @@
   vars:
     recorder_url: "{{ lookup('env', 'RECORDER_URL') }}"
   tasks:
+    - name: reduce journalctl log size
+      # systemctl status などが遅すぎるのを防ぐ refs #75
+      become: true
+      block:
+        - lineinfile:
+            path: /etc/systemd/journald.conf
+            regexp: "^#?SystemMaxUse="
+            line: "SystemMaxUse=50M"
+        - systemd:
+            name: systemd-journald
+            state: restarted
     - name: setup bluepy
       become: true
       block:
@@ -41,7 +52,7 @@
         - template:
             src: templates/record.sh
             dest: /opt/scanner/record.sh
-            mode: '0755'
+            mode: "0755"
         - cron:
             name: record
             job: "/opt/scanner/record.sh"

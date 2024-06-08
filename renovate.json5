@@ -8,6 +8,7 @@
   "includePaths": ["infra/**"],
   "packageRules": [
     {
+      "groupName": "infra",
       "matchFileNames": ["infra/**"],
       "ignoreDeps": [
         // gtsの依存の@typescript-eslint/typescript-estreeのバージョンの対応を見ながら上げる

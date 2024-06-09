@@ -3,7 +3,7 @@ import switchbot from "@/lib/switchbot";
 import { Query } from "@/lib/bigquery";
 import { DeviceId, IdToMac, MacToId } from "@/lib/parser";
 import { BigQueryTimestamp } from "@google-cloud/bigquery";
-import { Chart } from "./Chart";
+import { Chart, ChartRecord } from "./Chart";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,8 @@ export default async function Page({ params }: { params: { slug: string } }) {
     )
     .join(",");
 
+  const types = ["Temperature", "Humidity", "Load"] as const;
+  type Type = (typeof types)[number];
   const query = `
   SELECT
   	TIMESTAMP_TRUNC(TIMESTAMP_SUB(Time, INTERVAL MOD(EXTRACT(MINUTE FROM Time), 1) MINUTE),MINUTE) AS Time,
@@ -36,34 +38,40 @@ export default async function Page({ params }: { params: { slug: string } }) {
   WHERE
     Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL 4 HOUR)
     AND DeviceId IN ('${deviceMacs.join("','")}')
-    AND Type IN ('Temperature', 'Humidity', 'Load')
+    AND Type IN (${types.map((t) => `'${t}'`).join(",")})
   GROUP BY 1,2
   ORDER BY 1
   `;
 
   // MEMO: ある程度キャッシュできたほうがいい
-  const rows = await Query(env("PROJECT_ID"), query);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const rows = (await Query(env("PROJECT_ID"), query)) as ({
+    Time: BigQueryTimestamp;
+    Type: Type;
+  } & { [key in `D${string}`]: number })[];
+  const isDeviceId = (key: string): key is `D${string}` => key.startsWith("D");
 
   const temperature: ChartRecord[] = [];
   const humidity: ChartRecord[] = [];
   const load: ChartRecord[] = [];
   rows.forEach((r) => {
     const entries = Object.keys(r)
-      .filter((r) => r !== "Time" && r !== "Type")
+      .filter(isDeviceId)
       .map((id) => [
         switchbot.DeviceNameFor(DeviceId(id.replace(/^D/, ""))),
         r[id],
       ])
       .filter(([, v]) => v !== null);
-    /* eslint-disable @typescript-eslint/consistent-type-assertions */
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const record = {
       ...Object.fromEntries(entries),
-      name: new Date((r.Time as BigQueryTimestamp).value).toLocaleString(
-        "ja-JP",
-        { timeStyle: "short", timeZone: "Asia/Tokyo" }
-      ),
+      time: new Date(r.Time.value).toLocaleString("ja-JP", {
+        timeStyle: "short",
+        timeZone: "Asia/Tokyo",
+      }),
     } as ChartRecord;
-    /* eslint-enable @typescript-eslint/consistent-type-assertions */
+
     if (r.Type === "Temperature") temperature.push(record);
     if (r.Type === "Humidity") humidity.push(record);
     if (r.Type === "Load") load.push(record);
@@ -77,5 +85,3 @@ export default async function Page({ params }: { params: { slug: string } }) {
     </main>
   );
 }
-
-type ChartRecord = { name: string } & { [key in string]: number };

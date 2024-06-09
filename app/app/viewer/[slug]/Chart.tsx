@@ -15,17 +15,26 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-type ChartRecord = { name: string } & { [key in string]: number };
+type DeviceName = string;
+export type ChartRecord = { time: string } & { [key in DeviceName]: number };
+
 export function Chart(props: { name: string; data: ChartRecord[] }) {
   const { name, data } = props;
-  const keys = Object.keys(data[0]).filter((k) => k !== "name");
+
+  // data[0]のkeyを取るとデータの具合によってはkeyが欠損することがあるため、全データを走査する。
+  // Chartごとに全データをループするので効率悪いが、バックエンドでやっても地味に面倒だし、
+  // 直すならpropsの型からなんとかしたほうがよさそう。
+  const devices = Array.from(
+    new Set(data.map((d) => Object.keys(d).filter((k) => k !== "time")).flat())
+  );
+
   return (
     <section>
       <h4>{name}</h4>
       <TurnOffDefaultPropsWarning />
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={data}>
-          {keys.map((k, i) => (
+          {devices.map((k, i) => (
             <Line
               type="monotone"
               dot={false}
@@ -37,7 +46,7 @@ export function Chart(props: { name: string; data: ChartRecord[] }) {
           ))}
           <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
           {/* ticksを自前で指定して、N時ピッタリの軸にしたほうが見やすそう */}
-          <XAxis dataKey="name" interval={50} fontSize={14} />
+          <XAxis dataKey="time" interval={50} fontSize={14} />
           <YAxis type="number" domain={["auto", "auto"]} fontSize={14} />
           <Tooltip
             // 縦軸のラベル値をいい感じに見やすくする。

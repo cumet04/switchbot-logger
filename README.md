@@ -11,19 +11,22 @@ SwitchBotのプラグや温湿度計の計測データを取得・蓄積する�
   - recorder
     - Advertisementを入力として受け取り、SwitchBotのセンサデータとしてパースし、BigQueryに貯める
   - viewer
-    - xxx
+    - BigQueryに貯めたデータをグラフ表示する
 
 Raspi上のコードや設定はごく最低限にし、デプロイやメンテの頻度を下げる。
 
 ## デプロイ
 主に自分用のメモ
 
+### app
+* デプロイはCloudBuildで実施される
+* mainブランチが更新されると、production, stagingへデプロイされる
+* stagingブランチが更新されると、stagingへデプロイされる
+
 ### infra
 * GCPプロジェクトは適宜セットアップ。APIも適宜有効化
 * infra配下で`npm run apply staging (or production)`
   - 初期セットアップ時は多分コケる。SecretManagerで各種値を埋めてやり直す
-
-TODO: 記載
 
 ### Raspberry Pi
 ※Raspberry OS Lite 64bit (bullseye)で確認

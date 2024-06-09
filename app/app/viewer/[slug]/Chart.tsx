@@ -20,7 +20,14 @@ export type ChartRecord = { time: string } & { [key in DeviceName]: number };
 
 export function Chart(props: { name: string; data: ChartRecord[] }) {
   const { name, data } = props;
-  const devices = Object.keys(data[0]).filter((k) => k !== "time");
+
+  // data[0]のkeyを取るとデータの具合によってはkeyが欠損することがあるため、全データを走査する。
+  // Chartごとに全データをループするので効率悪いが、バックエンドでやっても地味に面倒だし、
+  // 直すならpropsの型からなんとかしたほうがよさそう。
+  const devices = Array.from(
+    new Set(data.map((d) => Object.keys(d).filter((k) => k !== "time")).flat())
+  );
+
   return (
     <section>
       <h4>{name}</h4>

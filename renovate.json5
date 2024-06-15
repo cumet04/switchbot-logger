@@ -5,6 +5,7 @@
     "config:recommended"
   ],
   "dependencyDashboard": false,
+  "additionalBranchPrefix": "{{parentDir}}/",
   // MEMO: scheduleのフォーマット https://breejs.github.io/later/parsers.html#text
   // playground https://codepen.io/antonlydike/full/Kgygpr
   "schedule": ["on the first day of the month"],

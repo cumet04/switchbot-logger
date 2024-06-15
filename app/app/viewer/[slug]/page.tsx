@@ -5,13 +5,29 @@ import { DeviceId, IdToMac, MacToId } from "@/lib/parser";
 import { BigQueryTimestamp } from "@google-cloud/bigquery";
 import { Chart, ChartRecord } from "./Chart";
 import { notFound } from "next/navigation";
+import { Refresher } from "./Refresher";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Page({ params }: { params: { slug: string } }) {
+  const [temperature, humidity, load] = await fetchChartData();
+
   const auth = params.slug;
   if (auth !== env("AUTH_PATH")) return notFound(); // notFoundではないのだが、nextではpage内では多分これしか手がない
+
+  return (
+    <main>
+      <Refresher minutes={5} />
+      <Chart name="Temperature" data={temperature} />
+      <Chart name="Humidity" data={humidity} />
+      <Chart name="Load" data={load} />
+    </main>
+  );
+}
+
+async function fetchChartData() {
+  // return [[], [], []]; // ローカル検証用
 
   await switchbot.EnsureDevices();
   const devices = (
@@ -77,11 +93,5 @@ export default async function Page({ params }: { params: { slug: string } }) {
     if (r.Type === "Load") load.push(record);
   });
 
-  return (
-    <main>
-      <Chart name="Temperature" data={temperature} />
-      <Chart name="Humidity" data={humidity} />
-      <Chart name="Load" data={load} />
-    </main>
-  );
+  return [temperature, humidity, load];
 }

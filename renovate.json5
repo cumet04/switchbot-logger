@@ -26,6 +26,9 @@
       "groupName": "infra",
       "matchFileNames": ["infra/**"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "pinDigest", "digest", "lockFileMaintenance", "rollback", "bump", "replacement"],
+    },
+    {
+      "matchFileNames": ["infra/**"],
       "ignoreDeps": [
         // gtsの依存の@typescript-eslint/typescript-estreeのバージョンの対応を見ながら上げる
         "typescript",

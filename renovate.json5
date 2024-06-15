@@ -14,14 +14,15 @@
   //   // MEMO: 普通のアップデートとlockFileMaintenanceを同時に実行する手段は見当たらない
   //   "schedule": ["on the 15th day of the month"]
   // },
-  "includePaths": ["app/**", "infra/**"],
+  "includePaths": ["infra/**"],
+  // "includePaths": ["app/**", "infra/**"],
   "packageRules": [
-    {
-      "groupName": "app",
-      "matchFileNames": ["app/**"],
-      // いいから全部まとめろ、というおまじない
-      "matchUpdateTypes": ["major", "minor", "patch", "pin", "pinDigest", "digest", "lockFileMaintenance", "rollback", "bump", "replacement"]
-    },
+    // {
+    //   "groupName": "app",
+    //   "matchFileNames": ["app/**"],
+    //   // いいから全部まとめろ、というおまじない
+    //   "matchUpdateTypes": ["major", "minor", "patch", "pin", "pinDigest", "digest", "lockFileMaintenance", "rollback", "bump", "replacement"]
+    // },
     {
       "groupName": "infra",
       "matchFileNames": ["infra/**"],

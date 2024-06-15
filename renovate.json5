@@ -9,11 +9,11 @@
   // MEMO: scheduleのフォーマット https://breejs.github.io/later/parsers.html#text
   // playground https://codepen.io/antonlydike/full/Kgygpr
   "schedule": ["on the first day of the month"],
-  // "lockFileMaintenance": {
-  //   "enabled": true,
-  //   // MEMO: 普通のアップデートとlockFileMaintenanceを同時に実行する手段は見当たらない
-  //   "schedule": ["on the 15th day of the month"]
-  // },
+  "lockFileMaintenance": {
+    "enabled": true
+    // MEMO: 普通のアップデートとlockFileMaintenanceを同時に実行する手段は見当たらない
+    // "schedule": ["on the 15th day of the month"]
+  },
   "includePaths": ["app/**", "infra/**"],
   "packageRules": [
     {

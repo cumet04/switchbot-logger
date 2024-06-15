@@ -18,7 +18,11 @@
   "packageRules": [
     {
       "groupName": "app",
-      "matchFileNames": ["app/**"]
+      "matchFileNames": ["app/**"],
+      "ignoreDeps": [
+        // eslint-config-nextが9系に対応していない
+        "eslint"
+      ]
     },
     {
       "groupName": "infra",

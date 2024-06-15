@@ -10,9 +10,21 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Page({ params }: { params: { slug: string } }) {
+  const [temperature, humidity, load] = await fetchChartData();
+
   const auth = params.slug;
   if (auth !== env("AUTH_PATH")) return notFound(); // notFoundではないのだが、nextではpage内では多分これしか手がない
 
+  return (
+    <main>
+      <Chart name="Temperature" data={temperature} />
+      <Chart name="Humidity" data={humidity} />
+      <Chart name="Load" data={load} />
+    </main>
+  );
+}
+
+async function fetchChartData() {
   await switchbot.EnsureDevices();
   const devices = (
     ["Plug Mini (US)", "Plug Mini (JP)", "Meter", "WoIOSensor"] as const
@@ -77,11 +89,5 @@ export default async function Page({ params }: { params: { slug: string } }) {
     if (r.Type === "Load") load.push(record);
   });
 
-  return (
-    <main>
-      <Chart name="Temperature" data={temperature} />
-      <Chart name="Humidity" data={humidity} />
-      <Chart name="Load" data={load} />
-    </main>
-  );
+  return [temperature, humidity, load];
 }

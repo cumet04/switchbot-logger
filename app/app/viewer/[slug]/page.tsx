@@ -5,6 +5,7 @@ import { DeviceId, IdToMac, MacToId } from "@/lib/parser";
 import { BigQueryTimestamp } from "@google-cloud/bigquery";
 import { Chart, ChartRecord } from "./Chart";
 import { notFound } from "next/navigation";
+import { Refresher } from "./Refresher";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,6 +18,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
 
   return (
     <main>
+      <Refresher minutes={5} />
       <Chart name="Temperature" data={temperature} />
       <Chart name="Humidity" data={humidity} />
       <Chart name="Load" data={load} />
@@ -25,6 +27,8 @@ export default async function Page({ params }: { params: { slug: string } }) {
 }
 
 async function fetchChartData() {
+  // return [[], [], []]; // ローカル検証用
+
   await switchbot.EnsureDevices();
   const devices = (
     ["Plug Mini (US)", "Plug Mini (JP)", "Meter", "WoIOSensor"] as const

@@ -30,7 +30,11 @@ export class CloudRunApp extends BaseConstruct {
       event: {
         push: {
           // mainが更新された場合は開発系も更新する
-          branch: this.env === 'production' ? '^main$' : `^(main|${this.env})$`,
+          // stagingはappのrenovateのPRでも自動デプロイさせる
+          branch: {
+            production: '^main$',
+            staging: ['^main$', `^${this.env}$`, '^renovate/app/'].join('|'),
+          }[this.env],
         },
       },
       buildYamlPath: 'app/cloudbuild.yaml',

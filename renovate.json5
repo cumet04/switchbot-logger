@@ -22,20 +22,24 @@
       "matchFileNames": ["app/**"],
       // いいから全部まとめろ、というおまじない
       // "matchUpdateTypes": ["major", "minor", "patch", "pin", "pinDigest", "digest", "lockFileMaintenance", "rollback", "bump", "replacement"]
+      "ignoreDeps": [
+        // eslint-config-nextが9系に対応していない
+        "eslint"
+      ]
     },
     {
       "groupName": "infra",
       "matchFileNames": ["infra/**"],
       // "matchUpdateTypes": ["major", "minor", "patch", "pin", "pinDigest", "digest", "lockFileMaintenance", "rollback", "bump", "replacement"],
-    },
-    {
-      "matchFileNames": ["infra/**"],
       "ignoreDeps": [
         // gtsの依存の@typescript-eslint/typescript-estreeのバージョンの対応を見ながら上げる
         "typescript",
         // FIXME: .node-versionのとメジャーバージョンをいい感じに合わせて処理できるか？
         "@types/node"
       ]
+    },
+    {
+      "matchFileNames": ["infra/**"],
     }
   ]
 }

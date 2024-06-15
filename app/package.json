@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@google-cloud/bigquery": "7.5.2",
-    "@sentry/nextjs": "7.109.0",
+    "@sentry/nextjs": "8.9.2",
     "@types/node": "20.12.5",
     "@types/react": "18.2.74",
     "@types/react-dom": "18.2.24",
-    "eslint": "^8.0.0",
+    "eslint": "^9.0.0",
     "eslint-config-next": "14.1.4",
     "next": "14.1.4",
     "react": "18.2.0",
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "6.4.2",
-    "@testing-library/react": "14.2.2",
+    "@testing-library/react": "16.0.0",
     "@types/jest": "29.5.12",
     "@typescript-eslint/eslint-plugin": "7.5.0",
     "eslint-config-prettier": "9.1.0",

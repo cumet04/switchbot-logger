@@ -25,8 +25,9 @@ export async function Query(projectId: string, query: string) {
   const bigquery = new BigQuery({ projectId });
   const resp = await bigquery.query(query);
 
+  // MEMO: respは0番目に結果配列が、1, 2番目はqueryやresulet metadataが入る
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return resp.flatMap((r) => r) as Record<string, unknown>[];
+  return resp[0] as Record<string, unknown>[];
 }
 
 // テストやデバッグ用に最新のデータを取得する

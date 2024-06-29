@@ -18,7 +18,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
 
   return (
     <main>
-      <Refresher minutes={5} />
+      <Refresher minutes={10} />
       <Chart name="Temperature" data={temperature} />
       <Chart name="Humidity" data={humidity} />
       <Chart name="Load" data={load} />

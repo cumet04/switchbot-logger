@@ -145,7 +145,7 @@ class AdminStack extends BaseStack {
     new BillingBudget(this, {
       name: `ベース料金アラート-${projectId}`,
       targetProjectId: projectId,
-      baseAmount: '150',
+      baseAmount: '170',
       rules: [{current: 100}, {forecasted: 200}, {forecasted: 2000}],
     });
   }

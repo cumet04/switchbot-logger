@@ -11,8 +11,13 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
+    // TODO: ここの値をCIでどう渡すか・ローカルでどう設定するかを考える
+    baseURL: process.env.APP_STAGING_HOST,
     // baseURL: 'http://127.0.0.1:3000',
+    httpCredentials: {
+      username: process.env.BASIC_USER!,
+      password: process.env.BASIC_PASS!,
+    },
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

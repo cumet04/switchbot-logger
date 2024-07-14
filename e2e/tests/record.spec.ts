@@ -1,15 +1,9 @@
 import {test, expect, request} from '@playwright/test';
 import {describe} from 'node:test';
 
-// TODO: ここの値をCIでどう渡すか・ローカルでどう設定するかを考える
-const host = process.env.APP_STAGING_HOST;
-const auth_path = process.env.APP_STAGING_AUTH_PATH;
-// const host = 'http://localhost:3000';
-// const auth_path = 'local';
-
 describe('POST /record/[slug]', async () => {
   test('正常データ保存', async () => {
-    const context = await request.newContext({baseURL: host});
+    const context = await request.newContext();
 
     const now = new Date();
     const nowStr = now.toISOString();
@@ -24,11 +18,11 @@ describe('POST /record/[slug]', async () => {
     const postData = `${meterData}\n${unknownData}\n`; // 実データはJSONが改行で区切られているのでそれを再現
 
     // TEST: データのPOSTが成功すること
-    const resp1 = await context.post(`/record/${auth_path}`, {data: postData});
+    const resp1 = await context.post('/record', {data: postData});
     expect(resp1.status()).toBe(200);
 
     // TEST: debug用データ取得が成功すること
-    const resp2 = await context.get(`/record/${auth_path}/debug`);
+    const resp2 = await context.get('/record/debug');
     expect(resp2.ok()).toBeTruthy();
 
     const rows = (await resp2.json()).rows as {

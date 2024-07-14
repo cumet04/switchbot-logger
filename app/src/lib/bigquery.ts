@@ -32,17 +32,16 @@ export async function Query(projectId: string, query: string) {
 
 // テストやデバッグ用に最新のデータを取得する
 export async function QueryHeadRecords(projectId: string) {
-  const bigquery = new BigQuery({ projectId });
-
-  const query = [
-    "SELECT Time, DeviceId, Type, Value",
-    "FROM switchbot.metrics",
-    // データ投入はraspiから1分ごとなので、直近2分を取得すればなんらかのデータが含まれるはず
-    "WHERE Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 MINUTE)",
-    "LIMIT 500", // 念の為上限を設ける
-  ].join(" ");
-  const resp = await bigquery.query(query);
-  const rows = resp.flatMap((r) => r);
+  const rows = await Query(
+    projectId,
+    [
+      "SELECT Time, DeviceId, Type, Value",
+      "FROM switchbot.metrics",
+      // データ投入はraspiから1分ごとなので、直近2分を取得すればなんらかのデータが含まれるはず
+      "WHERE Time > DATETIME_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 MINUTE)",
+      "LIMIT 500", // 念の為上限を設ける
+    ].join(" ")
+  );
 
   return toSensorRecords(rows);
 }

@@ -7,5 +7,7 @@ services:
       PORT: 8080
       PROJECT_ID:
       AUTH_PATH: local
+      BASIC_USER: user
+      BASIC_PASS: pass
       SWITCHBOT_TOKEN:
       SWITCHBOT_SECRET:

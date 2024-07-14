@@ -5,7 +5,6 @@
 
 const keys = [
   "PROJECT_ID",
-  "AUTH_PATH",
   "BASIC_USER",
   "BASIC_PASS",
   "SWITCHBOT_TOKEN",

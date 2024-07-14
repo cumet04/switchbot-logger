@@ -4,17 +4,13 @@ import { Query } from "@/lib/bigquery";
 import { DeviceId, IdToMac, MacToId } from "@/lib/parser";
 import { BigQueryTimestamp } from "@google-cloud/bigquery";
 import { Chart, ChartRecord } from "./Chart";
-import { notFound } from "next/navigation";
 import { Refresher } from "./Refresher";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function Page({ params }: { params: { slug: string } }) {
+export default async function Page() {
   const [temperature, humidity, load] = await fetchChartData();
-
-  const auth = params.slug;
-  if (auth !== env("AUTH_PATH")) return notFound(); // notFoundではないのだが、nextではpage内では多分これしか手がない
 
   return (
     <main>

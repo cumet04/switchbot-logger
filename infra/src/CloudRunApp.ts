@@ -58,7 +58,6 @@ export class CloudRunApp extends BaseConstruct {
         NEXT_PUBLIC_APP_ENV: this.env,
       },
       secrets: {
-        AUTH_PATH: new Secret(this, 'auth_path'),
         SWITCHBOT_TOKEN: new Secret(this, 'switchbot_token'),
         SWITCHBOT_SECRET: new Secret(this, 'switchbot_secret'),
         SENTRY_AUTH_TOKEN: new Secret(this, 'sentry_token'),

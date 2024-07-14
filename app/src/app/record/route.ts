@@ -4,17 +4,13 @@ import { Parse } from "@/lib/parser";
 import switchbot from "@/lib/switchbot";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // TODO: sourcemapだせない？
 // TODO: 投げられたエラーオブジェクトのネスト深い場合に中身が展開されず、何もわからない。カスタムロギングを入れないといけないかも
 
-export async function POST(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
-  const auth = params.slug;
-  if (auth !== env("AUTH_PATH"))
-    return NextResponse.json({ error: "invalid auth" }, { status: 401 });
-
+export async function POST(request: Request) {
   const input = await request.text();
 
   await switchbot.EnsureDevices();

@@ -49,11 +49,24 @@
     - name: deploy record
       become: true
       block:
-        - template:
-            src: templates/record.sh
+        # record.env は手動で設置・値書き込みする
+        - copy:
+            src: files/record.sh
             dest: /opt/scanner/record.sh
             mode: "0755"
         - cron:
             name: record
             job: "/opt/scanner/record.sh"
             minute: "*" # every minute
+
+    - name: deploy retry
+      become: true
+      block:
+        - copy:
+            src: files/retry.sh
+            dest: /opt/scanner/retry.sh
+            mode: "0755"
+        - cron:
+            name: record
+            job: "/opt/scanner/retry.sh"
+            minute: "0" # every hour

@@ -31,9 +31,9 @@ Raspi上のコードや設定はごく最低限にし、デプロイやメンテ
 ### Raspberry Pi
 ※Raspberry OS Lite 64bit (bullseye)で確認
 
-デバイスにsshできるように鍵など設定し、必要に応じて`raspi/hosts`ファイルにホスト名を入れておく。
-
-また、recorderのエンドポイントを`RECORDER_URL`環境変数から読めるようにしつつ
+デバイスにsshできるように鍵など設定し、必要に応じて`raspi/hosts`ファイルにホスト名を入れておき
 ```
 ansible-playbook -i hosts -u pi entry.yml
 ```
+
+なお`files/record.env`はansible管理化に無いので、初期構築時は手動で配置する。

@@ -10,7 +10,9 @@
             path: /etc/systemd/journald.conf
             regexp: "^#?SystemMaxUse="
             line: "SystemMaxUse=50M"
-        - systemd:
+          register: journald
+        - when: journald.changed
+          systemd:
             name: systemd-journald
             state: restarted
     - name: setup bluepy
@@ -40,11 +42,13 @@
         - copy:
             src: files/scanner.service
             dest: /etc/systemd/system/scanner.service
-        - systemd:
-            enabled: true
-            state: restarted
-            daemon_reload: true
+          register: scanner_service
+        - when: scanner_service.changed
+          systemd:
             name: scanner
+            enabled: true
+            daemon_reload: true
+            state: restarted
 
     - name: deploy record
       become: true
@@ -67,6 +71,6 @@
             dest: /opt/scanner/retry.sh
             mode: "0755"
         - cron:
-            name: record
+            name: retry
             job: "/opt/scanner/retry.sh"
             minute: "0" # every hour

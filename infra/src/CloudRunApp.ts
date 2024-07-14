@@ -40,11 +40,6 @@ export class CloudRunApp extends BaseConstruct {
       buildYamlPath: 'app/cloudbuild.yaml',
     });
 
-    const token = new Secret(this, 'switchbot_token');
-    const secret = new Secret(this, 'switchbot_secret');
-    const authPath = new Secret(this, 'auth_path');
-    const sentryToken = new Secret(this, 'sentry_token');
-
     const sa = new ServiceAccount(this, 'application', [
       // TODO: 対象リソース絞れるか？
       'bigquery.datasets.get',
@@ -63,10 +58,10 @@ export class CloudRunApp extends BaseConstruct {
         NEXT_PUBLIC_APP_ENV: this.env,
       },
       secrets: {
-        AUTH_PATH: authPath,
-        SWITCHBOT_TOKEN: token,
-        SWITCHBOT_SECRET: secret,
-        SENTRY_AUTH_TOKEN: sentryToken,
+        AUTH_PATH: new Secret(this, 'auth_path'),
+        SWITCHBOT_TOKEN: new Secret(this, 'switchbot_token'),
+        SWITCHBOT_SECRET: new Secret(this, 'switchbot_secret'),
+        SENTRY_AUTH_TOKEN: new Secret(this, 'sentry_token'),
       },
     });
   }

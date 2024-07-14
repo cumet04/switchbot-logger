@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { appenv } from "./lib/envvars";
+import { appenv } from "@/lib/envvars";
 
 const environment = appenv();
 

@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-source ./record.env
+source $(dirname $0)/record.env
 
 today=$(date +%Y%m%d_%H%M%S)
 

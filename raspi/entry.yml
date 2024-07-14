@@ -67,6 +67,6 @@
             dest: /opt/scanner/retry.sh
             mode: "0755"
         - cron:
-            name: record
+            name: retry
             job: "/opt/scanner/retry.sh"
             minute: "0" # every hour

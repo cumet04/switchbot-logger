@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@playwright/test": "^1.42.1"
+    "@playwright/test": "^1.45.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",

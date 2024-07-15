@@ -17,7 +17,9 @@ export const Refresher = (props: { minutes: number }) => {
   useEffect(() => {
     setInterval(
       () => {
-        router.refresh();
+        // 開きっぱなしタブによる不要なリクエストを抑制する
+        // MEMO: この制御は現在playwrightではテストできない refs https://github.com/microsoft/playwright/issues/3570
+        if (!document.hidden) router.refresh();
       },
       1000 * 60 * props.minutes
     );

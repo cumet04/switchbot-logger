@@ -1,7 +1,33 @@
 import {test, expect, request} from '@playwright/test';
 import {describe} from 'node:test';
 
-describe('POST /record/[slug]', async () => {
+describe('GET /viewer', async () => {
+  test('正常閲覧', async ({page}) => {
+    // 閲覧してconsoleエラーが出ないこと
+    const errors: Error[] = [];
+    page.on('pageerror', e => errors.push(e));
+    const resp = await page.goto('/viewer');
+    expect(resp?.status()).toBe(200);
+    expect(errors).toMatchObject([]);
+
+    // TODO: あれとこれのラベルとハコが表示されている、とか見てもいい
+  });
+
+  test('1分後にページ自動更新される', async ({page}) => {
+    const oneMinute = 1 * 60 * 1000;
+    test.setTimeout(oneMinute + 5000);
+
+    const resp = await page.goto('/viewer');
+    expect(resp?.status()).toBe(200);
+
+    const before = await page.content();
+    await page.waitForTimeout(oneMinute); // Refresherは本番以外では1分間隔なことに依存
+    const after = await page.content();
+    expect(before).not.toEqual(after);
+  });
+});
+
+describe('POST /record', async () => {
   test('正常データ保存', async () => {
     const context = await request.newContext();
 
@@ -23,7 +49,7 @@ describe('POST /record/[slug]', async () => {
 
     // TEST: debug用データ取得が成功すること
     const resp2 = await context.get('/record/debug');
-    expect(resp2.ok()).toBeTruthy();
+    expect(resp2.status()).toBe(200);
 
     const rows = (await resp2.json()).rows as {
       Time: string;

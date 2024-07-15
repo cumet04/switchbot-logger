@@ -1,4 +1,4 @@
-import { env } from "@/lib/envvars";
+import { appenv, env } from "@/lib/envvars";
 import switchbot from "@/lib/switchbot";
 import { Query } from "@/lib/bigquery";
 import { DeviceId, IdToMac, MacToId } from "@/lib/parser";
@@ -12,9 +12,13 @@ export const revalidate = 0;
 export default async function Page() {
   const [temperature, humidity, load] = await fetchChartData();
 
+  // 本番以外では動作確認などしやすいように短い時間で動作させる
+  // 1分より短くても良いが、更新時刻表示が分単位のため、確実に変化が起こる1分にしておく
+  const refresh = appenv() === "production" ? 10 : 1;
+
   return (
     <main>
-      <Refresher minutes={10} />
+      <Refresher minutes={refresh} />
       <Chart name="Temperature" data={temperature} />
       <Chart name="Humidity" data={humidity} />
       <Chart name="Load" data={load} />

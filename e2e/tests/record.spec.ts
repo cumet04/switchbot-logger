@@ -1,7 +1,7 @@
 import {test, expect, request} from '@playwright/test';
 import {describe} from 'node:test';
 
-describe('POST /record/[slug]', async () => {
+describe('POST /record', async () => {
   test('正常データ保存', async () => {
     const context = await request.newContext();
 

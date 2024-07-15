@@ -1,6 +1,7 @@
 import json
+import time
 from datetime import datetime, timezone
-from bluepy.btle import Scanner, DefaultDelegate
+from bluepy.btle import Scanner, DefaultDelegate, BTLEManagementError
 
 output_path = "out.json"
 
@@ -28,4 +29,11 @@ class ScanDelegate(DefaultDelegate):
 
 
 scanner = Scanner().withDelegate(ScanDelegate())
-scanner.scan(0)
+
+while True:
+    try:
+        scanner.scan(0)
+    except BTLEManagementError:
+        # raspi起動直後など、デバイスがreadyになるまでリトライで待つ
+        print("catch BTLEManagementError, retry after 10 seconds...")
+        time.sleep(10)

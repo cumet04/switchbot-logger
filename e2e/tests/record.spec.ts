@@ -12,6 +12,19 @@ describe('GET /viewer', async () => {
 
     // TODO: あれとこれのラベルとハコが表示されている、とか見てもいい
   });
+
+  test('1分後にページ自動更新される', async ({page}) => {
+    const oneMinute = 1 * 60 * 1000;
+    test.setTimeout(oneMinute + 5000);
+
+    const resp = await page.goto('/viewer');
+    expect(resp?.status()).toBe(200);
+
+    const before = await page.content();
+    await page.waitForTimeout(oneMinute); // Refresherは本番以外では1分間隔なことに依存
+    const after = await page.content();
+    expect(before).not.toEqual(after);
+  });
 });
 
 describe('POST /record', async () => {

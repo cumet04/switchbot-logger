@@ -23,7 +23,7 @@ describe('POST /record/[slug]', async () => {
 
     // TEST: debug用データ取得が成功すること
     const resp2 = await context.get('/record/debug');
-    expect(resp2.ok()).toBeTruthy();
+    expect(resp2.status()).toBe(200);
 
     const rows = (await resp2.json()).rows as {
       Time: string;

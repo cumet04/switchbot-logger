@@ -21,6 +21,11 @@ export async function POST(request: Request) {
     .filter((s) => s.length > 0)
     .flatMap((msg) => Parse(msg));
 
+  // 入力データは受け取ったが、その中にswitchbotのデータが無い場合は正常に起こり得るので
+  // その場合は0件記録として正常終了する。 refs #109
+  // なんらかのバグで異常にゼロ件になる可能性はあるが、それはBQ側のアラートで検知することに
+  if (btRecords.length === 0) return NextResponse.json({ recorded: 0 });
+
   const records = btRecords.map((r) => ({
     Time: r.Time,
     DeviceId: r.Address,
@@ -30,5 +35,5 @@ export async function POST(request: Request) {
 
   await Record(env("PROJECT_ID"), "switchbot", "metrics", records);
 
-  return NextResponse.json({ message: "ok" });
+  return NextResponse.json({ recorded: records.length });
 }

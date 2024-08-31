@@ -11,7 +11,12 @@ export const revalidate = 0;
 // TODO: 投げられたエラーオブジェクトのネスト深い場合に中身が展開されず、何もわからない。カスタムロギングを入れないといけないかも
 
 export async function POST(request: Request) {
-  const input = await request.text();
+  const raw = await request.text();
+
+  // raspi側の具合が良くない場合に時折ゼロ文字が混入することがあるので、それの対応 refs #43
+  // 今のところゼロ文字以外が入る場合や先頭・末尾以外に入る場合は見たことないので、それ以外があったら検知（エラー）できるようにする
+  // eslint-disable-next-line no-control-regex
+  const input = raw.replace(/^\x00*/, "").replace(/\x00*$/, "");
 
   await switchbot.EnsureDevices();
   // MEMO: Parseの中でJSON.parseしたり型確認したりしており、入力値不正のハンドリングの意味で不適切。

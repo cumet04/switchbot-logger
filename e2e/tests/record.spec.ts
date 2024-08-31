@@ -85,4 +85,63 @@ describe('POST /record', async () => {
       },
     ]);
   });
+
+  // TODO: 明らかにunit testの管轄なのをなんとかする？
+
+  test('入力先頭にゼロ文字が含まれるデータ保存', async () => {
+    const context = await request.newContext();
+
+    // TODO: nowとか正常データとかDRYな感じにしたい
+    const now = new Date();
+    const nowStr = now.toISOString();
+    const nowStrPi = nowStr.replace(/Z$/, '000+00:00'); // raspi側の出力に合わせる
+
+    // 実際のデータの時刻とMACアドレスを変えたもの。
+    // 実環境に似せて、メトリクスとして取得できるセンサデータとそれ以外の不明データを用意する。
+    const meterAddr = 'ac:de:48:28:ac:ed';
+    const meterData = `{"time": "${nowStrPi}", "addr": "${meterAddr}", "structs": [{"adtype": 1, "desc": "Flags", "value": "06"}, {"adtype": 255, "desc": "Manufacturer", "value": "5900ecacde4828aced"}, {"adtype": 7, "desc": "Complete 128b Services", "value": "cba20d00-224d-11e6-9fb8-0002a5d5c51b"}, {"adtype": 22, "desc": "16b Service Data", "value": "000d540064038e26"}]}`;
+    const postData = `\x00\x00\x00\x00${meterData}\n`; // 先頭にゼロ文字を含む
+
+    // TEST: データのPOSTが成功すること
+    const resp1 = await context.post('/record', {data: postData});
+    expect(resp1.status()).toBe(200);
+  });
+
+  test('入力末尾にゼロ文字が含まれるデータ保存', async () => {
+    const context = await request.newContext();
+
+    // TODO: nowとか正常データとかDRYな感じにしたい
+    const now = new Date();
+    const nowStr = now.toISOString();
+    const nowStrPi = nowStr.replace(/Z$/, '000+00:00'); // raspi側の出力に合わせる
+
+    // 実際のデータの時刻とMACアドレスを変えたもの。
+    // 実環境に似せて、メトリクスとして取得できるセンサデータとそれ以外の不明データを用意する。
+    const meterAddr = 'ac:de:48:28:ac:ed';
+    const meterData = `{"time": "${nowStrPi}", "addr": "${meterAddr}", "structs": [{"adtype": 1, "desc": "Flags", "value": "06"}, {"adtype": 255, "desc": "Manufacturer", "value": "5900ecacde4828aced"}, {"adtype": 7, "desc": "Complete 128b Services", "value": "cba20d00-224d-11e6-9fb8-0002a5d5c51b"}, {"adtype": 22, "desc": "16b Service Data", "value": "000d540064038e26"}]}`;
+    const postData = `${meterData}\x00\x00\x00\x00`; // 先頭にゼロ文字を含む
+
+    // TEST: データのPOSTが成功すること
+    const resp1 = await context.post('/record', {data: postData});
+    expect(resp1.status()).toBe(200);
+  });
+
+  test('入力中間にゼロ文字が含まれるデータ保存', async () => {
+    const context = await request.newContext();
+
+    // TODO: nowとか正常データとかDRYな感じにしたい
+    const now = new Date();
+    const nowStr = now.toISOString();
+    const nowStrPi = nowStr.replace(/Z$/, '000+00:00'); // raspi側の出力に合わせる
+
+    // 実際のデータの時刻とMACアドレスを変えたもの。
+    // 実環境に似せて、メトリクスとして取得できるセンサデータとそれ以外の不明データを用意する。
+    const meterAddr = 'ac:de:48:28:ac:ed';
+    const meterData = `{"time": "${nowStrPi}", "addr": "${meterAddr}", "structs": [{"adtype": 1, "desc": "Flags", "value": "06"}, {"adtype": 255, "desc": "Manufacturer", "value": "5900ecacde4828aced"}, {"adtype": 7, "desc": "Complete 128b Services", "value": "cba20d00-224d-11e6-9fb8-0002a5d5c51b"}, {"adtype": 22, "desc": "16b Service Data", "value": "000d540064038e26"}]}`;
+    const postData = `${meterData}\n\x00\x00\x00\x00\n${meterData}`; // 先頭にゼロ文字を含む
+
+    // TEST: データのPOSTが失敗すること
+    const resp1 = await context.post('/record', {data: postData});
+    expect(resp1.status()).toBe(500);
+  });
 });

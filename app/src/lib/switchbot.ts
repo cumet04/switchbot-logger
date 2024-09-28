@@ -1,16 +1,14 @@
 import crypto from "crypto";
 import { appenv, env } from "./envvars";
 
-const DeviceTypes = [
-  "Plug Mini (US)",
-  "Plug Mini (JP)",
-  "Motion Sensor",
-  "Meter",
-  "WoIOSensor",
-  "Ceiling Light",
-  "Hub Mini",
-] as const;
-type DeviceType = (typeof DeviceTypes)[number];
+type DeviceType =
+  | "Plug Mini (US)"
+  | "Plug Mini (JP)"
+  | "Motion Sensor"
+  | "Meter"
+  | "WoIOSensor"
+  | "Ceiling Light"
+  | "Hub Mini";
 
 // 現時点で使う予定のあるステータスのみ定義。infraredRemoteListやhubDeviceIdは無視。
 type Device = {

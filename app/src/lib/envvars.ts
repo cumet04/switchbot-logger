@@ -3,15 +3,14 @@
 // そこらあたりで存在確認をするようにしたい
 // refs https://github.com/vercel/next.js/issues/49897
 
-const keys = [
-  "PROJECT_ID",
-  "BASIC_USER",
-  "BASIC_PASS",
-  "SWITCHBOT_TOKEN",
-  "SWITCHBOT_SECRET",
-] as const;
+type keys =
+  | "PROJECT_ID"
+  | "BASIC_USER"
+  | "BASIC_PASS"
+  | "SWITCHBOT_TOKEN"
+  | "SWITCHBOT_SECRET";
 
-export function env(key: (typeof keys)[number]): string {
+export function env(key: keys): string {
   if (process.env.NODE_ENV === "test") return `${key}.test`;
 
   const v = process.env[key];

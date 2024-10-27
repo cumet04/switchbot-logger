@@ -94,7 +94,7 @@ function parseMeterData(s: AdStructure): BluetoothSensorRecord[] {
   ];
 }
 function parseWoIOSensorData(s: AdStructure): BluetoothSensorRecord[] {
-  // 公式仕様書に記載がないので、個人ブログを参照 https://tsuzureya.net/?p=812
+  // 公式仕様書に記載がないので、個人ブログを参照 https://tsuzureya.net/how-to-use-switchbot-waterproof-thermo-hygrometer/
 
   // 主なデータは Manufacturer(255)にあるので、それ以外は無視。
   // 参考ブログのコメント欄より、ServiceData(22)にバッテリ残量がありそうなことが書かれているが

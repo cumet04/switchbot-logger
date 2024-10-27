@@ -3,6 +3,7 @@ import { MacAddress, MacToId, Parse, TimeStr } from "./parser";
 
 const meterMac = MacAddress("ac:de:48:28:ac:ed");
 const woioSensorMac = MacAddress("ac:de:48:01:d3:95");
+const meterProCo2Mac = MacAddress("ac:de:48:8a:df:54");
 const plugUsMac = MacAddress("ac:de:48:6c:5f:f0");
 const plugJpMac = MacAddress("ac:de:48:4b:5e:d3");
 
@@ -27,6 +28,11 @@ describe("parse", () => {
       deviceId: MacToId(plugJpMac),
       deviceType: "Plug Mini (JP)",
       deviceName: "サーキュレーター",
+    },
+    {
+      deviceId: MacToId(meterProCo2Mac),
+      deviceType: "MeterPro(CO2)",
+      deviceName: "CO2センサー",
     },
   ]);
 
@@ -168,6 +174,13 @@ describe("センサー種類ごと", () => {
   });
 
   describe("WoIOSensor Data", () => {
+    it("AdTypeが22(Service Data)の場合はバッテリー情報が返る", () => {
+      parseMatch(
+        woioSensorMac,
+        '{"adtype": 22, "desc": "16b Service Data", "value": "3dfd770045"}',
+        [{ Type: "Battery", Value: 69 }]
+      );
+    });
     it("AdTypeが255(Manufacturer)の場合は各種情報が返る", () => {
       parseMatch(
         woioSensorMac,
@@ -175,6 +188,27 @@ describe("センサー種類ごと", () => {
         [
           { Type: "Temperature", Value: 25.0 },
           { Type: "Humidity", Value: 70 },
+        ]
+      );
+    });
+  });
+
+  describe("MeterPro(CO2) Data", () => {
+    it("AdTypeが22(Service Data)の場合はバッテリー情報が返る", () => {
+      parseMatch(
+        meterProCo2Mac,
+        '{"adtype": 22, "desc": "16b Service Data", "value": "3dfd350064"}',
+        [{ Type: "Battery", Value: 100 }]
+      );
+    });
+    it("AdTypeが255(Manufacturer)の場合は各種情報が返る", () => {
+      parseMatch(
+        meterProCo2Mac,
+        '{"adtype": 255, "desc": "Manufacturer", "value": "6909b0e9fe548adf91e400983e002502a700"}',
+        [
+          { Type: "Temperature", Value: 24.0 },
+          { Type: "Humidity", Value: 62 },
+          { Type: "CO2", Value: 679 },
         ]
       );
     });

@@ -13,7 +13,7 @@ export class BigqueryTable extends BaseConstruct {
     datasetId: string,
     tableId: string,
     schema: string,
-    overrides?: Partial<BigqueryTableConfig>
+    overrides?: Partial<BigqueryTableConfig>,
   ) {
     super(scope, `BigqueryTable_${datasetId}_${tableId}`);
 
@@ -45,7 +45,7 @@ export class ScheduledQuery extends BaseConstruct {
       schedule: string;
       query: string;
       email: boolean;
-    }
+    },
   ) {
     const {displayName, schedule, query, email} = config;
 

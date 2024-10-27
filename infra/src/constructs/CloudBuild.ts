@@ -21,7 +21,7 @@ export class CloudBuild extends BaseConstruct {
       githubRepo: string;
       event: Omit<CloudbuildTriggerRepositoryEventConfig, 'repository'>;
       buildYamlPath: string;
-    }
+    },
   ) {
     super(scope, `CloudBuild_${name}`);
 

@@ -14,7 +14,7 @@ export class WorkloadIdentityResources extends BaseConstruct {
     config: {
       serviceAccount: ServiceAccount;
       repositoryId: string;
-    }
+    },
   ) {
     super(scope, 'WorkloadIdentity');
 

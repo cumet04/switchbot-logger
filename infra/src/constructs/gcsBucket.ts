@@ -11,7 +11,7 @@ export class GcsBucket extends BaseConstruct {
     config: {} & Pick<
       StorageBucketConfig,
       'name' | 'versioning' | 'lifecycleRule'
-    >
+    >,
   ) {
     const {name, versioning, lifecycleRule} = config;
 

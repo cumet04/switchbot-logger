@@ -19,7 +19,7 @@ export class BillingBudget extends BaseConstruct {
       targetProjectId: string;
       baseAmount: string; // JPY
       rules: ThresholdRule[];
-    }
+    },
   ) {
     super(scope, 'BillingBudget'); // こうすると複数のBudgetを扱えないが、普通は複数作らないので問題ないはず
 
@@ -48,7 +48,7 @@ export class BillingBudget extends BaseConstruct {
           : {
               spendBasis: 'FORECASTED_SPEND',
               thresholdPercent: rule.forecasted / 100,
-            }
+            },
       ),
       lifecycle: {
         // 実リソース上ではproject_idではなくproject_numberで記録されており、毎回plan差分が出てしまうため無視しておく

@@ -17,7 +17,7 @@ export class CloudRun extends BaseConstruct {
       serviceAccount: ServiceAccount;
       envvars?: Record<string, string>;
       secrets?: Record<string, Secret>;
-    }
+    },
   ) {
     super(scope, `CloudRun_${name}`);
 
@@ -25,7 +25,7 @@ export class CloudRun extends BaseConstruct {
       ([key, value]): CloudRunV2ServiceTemplateContainersEnv => ({
         name: key,
         value,
-      })
+      }),
     );
     const secretEnvs = Object.entries(options.secrets ?? {}).map(
       ([key, secret]): CloudRunV2ServiceTemplateContainersEnv => ({
@@ -33,7 +33,7 @@ export class CloudRun extends BaseConstruct {
         valueSource: {
           secretKeyRef: {secret: secret.secretId, version: 'latest'},
         },
-      })
+      }),
     );
 
     const service = new CloudRunV2Service(this, 'service', {

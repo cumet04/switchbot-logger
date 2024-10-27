@@ -25,7 +25,10 @@ type DevicesResponse = {
 };
 
 const switchbot = {
-  DeviceTypeFor(deviceId: DeviceId): DeviceType | null {
+  // DeviceTypeにまだ未実装なデバイスを登録した場合は任意のstringが返る
+  DeviceTypeFor(
+    deviceId: DeviceId
+  ): DeviceType | "_NotMyOwnDevice" | (string & {}) {
     if (!this._devicesCache) throw new Error("devices cache is not set");
 
     // 開発環境では特定IDのみテスト用に受け付ける。E2Eで使う。
@@ -35,7 +38,7 @@ const switchbot = {
 
     const devices = this._devicesCache.body.deviceList;
     const device = devices.find((d) => d.deviceId === deviceId);
-    if (!device) return null;
+    if (!device) return "_NotMyOwnDevice";
 
     return device.deviceType;
   },

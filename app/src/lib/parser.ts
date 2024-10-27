@@ -23,15 +23,10 @@ export function Parse(msg: string): BluetoothSensorRecord[] {
       case "Plug Mini (US)":
       case "Plug Mini (JP)":
         return parsePlugData(s);
-      case "Motion Sensor":
-        // https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/motionsensor.md
-        // TODO: impl
-        return [];
-      case "Ceiling Light":
-        // 公式仕様書にまだ記載がない
-        return [];
-      case "Hub Mini":
-        // Hub Miniの情報はいらないので無視
+      case "Motion Sensor": // TODO: impl; https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/motionsensor.md
+      case "Ceiling Light": // 公式仕様書にまだ記載がない
+      case "Hub Mini": // Hub Miniの情報はいらないので無視
+      case "_NotMyOwnDevice":
         return [];
       default:
         return [];
@@ -129,8 +124,6 @@ function parseWoIOSensorData(s: AdStructure): BluetoothSensorRecord[] {
       Value: humidity,
     },
   ];
-
-  return [];
 }
 function parsePlugData(s: AdStructure): BluetoothSensorRecord[] {
   // プラグミニのパケットの仕様: https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/plugmini.md

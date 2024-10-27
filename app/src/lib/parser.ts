@@ -23,6 +23,8 @@ export function Parse(msg: string): BluetoothSensorRecord[] {
       case "Plug Mini (US)":
       case "Plug Mini (JP)":
         return parsePlugData(s);
+      case "MeterPro(CO2)":
+        return parseMeterProCO2Data(s);
       case "Motion Sensor": // TODO: impl; https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/motionsensor.md
       case "Ceiling Light": // 公式仕様書にまだ記載がない
       case "Hub Mini": // Hub Miniの情報はいらないので無視
@@ -125,6 +127,54 @@ function parseWoIOSensorData(s: AdStructure): BluetoothSensorRecord[] {
     },
   ];
 }
+
+function parseMeterProCO2Data(s: AdStructure): BluetoothSensorRecord[] {
+  // 公式仕様書に記載がないので、個人ブログを参照 https://tsuzureya.net/switchbot-co2-meter-hacks/
+
+  if (s.AdType === 22) {
+    const bytes = Buffer.from(s.Data, "hex");
+    const battery = bytes[4] & 0b01111111;
+    return [
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "Battery",
+        Value: battery,
+      },
+    ];
+  } else if (s.AdType === 255) {
+    const bytes = Buffer.from(s.Data, "hex");
+    const co2 = bytes[15] * 256 + bytes[16];
+    const humidity = bytes[12] & 0b01111111;
+
+    const tempIsNegative = !(bytes[11] & 0b10000000);
+    const tempInt = bytes[11] & 0b01111111;
+    const tempReal = (bytes[10] & 0b00001111) / 10;
+    const temperature = tempInt + tempReal;
+
+    return [
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "Temperature",
+        Value: tempIsNegative ? -temperature : temperature,
+      },
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "Humidity",
+        Value: humidity,
+      },
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "CO2",
+        Value: co2,
+      },
+    ];
+  } else return [];
+}
+
 function parsePlugData(s: AdStructure): BluetoothSensorRecord[] {
   // プラグミニのパケットの仕様: https://github.com/OpenWonderLabs/SwitchBotAPI-BLE/blob/5351dff1c78f6c7e2191cb0e37b9df080266ae77/devicetypes/plugmini.md
 

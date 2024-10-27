@@ -8,7 +8,8 @@ type DeviceType =
   | "Meter"
   | "WoIOSensor"
   | "Ceiling Light"
-  | "Hub Mini";
+  | "Hub Mini"
+  | "MeterPro(CO2)";
 
 // 現時点で使う予定のあるステータスのみ定義。infraredRemoteListやhubDeviceIdは無視。
 type Device = {

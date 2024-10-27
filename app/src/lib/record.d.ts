@@ -5,7 +5,13 @@ type TimeStr = string & { readonly _brand: unique symbol };
 
 type MacAddress = string & { readonly _brand: unique symbol }; // MACアドレス。現在は小文字
 type DeviceId = string & { readonly _brand: unique symbol }; // SwitchBotで管理されるデバイスID。hex大文字
-type RecordType = "Battery" | "Temperature" | "Humidity" | "PowerOn" | "Load";
+type RecordType =
+  | "Battery"
+  | "Temperature"
+  | "Humidity"
+  | "CO2"
+  | "PowerOn"
+  | "Load";
 
 type SensorRecord = {
   Time: TimeStr;

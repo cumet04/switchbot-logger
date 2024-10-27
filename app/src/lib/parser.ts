@@ -98,34 +98,42 @@ function parseMeterData(s: AdStructure): BluetoothSensorRecord[] {
 function parseWoIOSensorData(s: AdStructure): BluetoothSensorRecord[] {
   // 公式仕様書に記載がないので、個人ブログを参照 https://tsuzureya.net/how-to-use-switchbot-waterproof-thermo-hygrometer/
 
-  // 主なデータは Manufacturer(255)にあるので、それ以外は無視。
-  // 参考ブログのコメント欄より、ServiceData(22)にバッテリ残量がありそうなことが書かれているが
-  // バッテリ残量が減らなすぎて検証できない。バッテリが減りそうになったらまた考える
-  if (s.AdType !== 255) return [];
+  if (s.AdType === 22) {
+    const bytes = Buffer.from(s.Data, "hex");
+    const battery = bytes[4] & 0b01111111;
+    return [
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "Battery",
+        Value: battery,
+      },
+    ];
+  } else if (s.AdType === 255) {
+    const bytes = Buffer.from(s.Data, "hex");
 
-  const bytes = Buffer.from(s.Data, "hex");
+    const tempIsNegative = !(bytes[11] & 0b10000000);
+    const tempInt = bytes[11] & 0b01111111;
+    const tempReal = (bytes[10] & 0b00001111) / 10;
+    const temperature = tempInt + tempReal;
 
-  const tempIsNegative = !(bytes[11] & 0b10000000);
-  const tempInt = bytes[11] & 0b01111111;
-  const tempReal = (bytes[10] & 0b00001111) / 10;
-  const temperature = tempInt + tempReal;
+    const humidity = bytes[12] & 0b01111111;
 
-  const humidity = bytes[12] & 0b01111111;
-
-  return [
-    {
-      Time: s.Time,
-      Address: s.DeviceAddress,
-      Type: "Temperature",
-      Value: tempIsNegative ? -temperature : temperature,
-    },
-    {
-      Time: s.Time,
-      Address: s.DeviceAddress,
-      Type: "Humidity",
-      Value: humidity,
-    },
-  ];
+    return [
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "Temperature",
+        Value: tempIsNegative ? -temperature : temperature,
+      },
+      {
+        Time: s.Time,
+        Address: s.DeviceAddress,
+        Type: "Humidity",
+        Value: humidity,
+      },
+    ];
+  } else return [];
 }
 
 function parseMeterProCO2Data(s: AdStructure): BluetoothSensorRecord[] {

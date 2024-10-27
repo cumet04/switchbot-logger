@@ -174,6 +174,13 @@ describe("センサー種類ごと", () => {
   });
 
   describe("WoIOSensor Data", () => {
+    it("AdTypeが22(Service Data)の場合はバッテリー情報が返る", () => {
+      parseMatch(
+        woioSensorMac,
+        '{"adtype": 22, "desc": "16b Service Data", "value": "3dfd770045"}',
+        [{ Type: "Battery", Value: 69 }]
+      );
+    });
     it("AdTypeが255(Manufacturer)の場合は各種情報が返る", () => {
       parseMatch(
         woioSensorMac,

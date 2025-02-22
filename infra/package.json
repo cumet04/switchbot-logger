@@ -10,9 +10,9 @@
     "fix": "gts fix"
   },
   "dependencies": {
-    "@cdktf/provider-google": "14.7.0",
-    "cdktf": "0.20.9",
-    "cdktf-cli": "0.20.9",
+    "@cdktf/provider-google": "14.20.0",
+    "cdktf": "0.20.11",
+    "cdktf-cli": "0.20.11",
     "constructs": "10.4.2"
   },
   "devDependencies": {
